@@ -178,3 +178,108 @@ body { font-family: 'El Messiri', sans-serif; background-color: #0d284e; }
     border: 1px solid var(--sand-ochre);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
 }
+
+/* 3D Museum Styles */
+.museum-body {
+    margin: 0;
+    overflow: hidden;
+    font-family: 'El Messiri', sans-serif;
+    background-color: #000000;
+    cursor: default; 
+}
+.museum-body canvas { display: block; }
+
+#info-panel, #blocker {
+    position: absolute;
+    z-index: 10;
+    background: rgba(0, 0, 0, 0.95);
+    color: #FFD700;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.7);
+    padding: 20px;
+    transition: all 0.5s ease-in-out;
+    max-width: 400px;
+    text-align: right;
+    border: 2px solid #D4AF37;
+}
+#info-panel {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.95);
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+}
+#info-panel.visible {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+#blocker {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    max-width: none;
+    border: none;
+    background: rgba(0, 0, 0, 0.98);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    transition: opacity 0.5s ease-in-out;
+    pointer-events: auto;
+    z-index: 20; 
+}
+#blocker.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+#crosshair {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 8px;
+    height: 8px;
+    background: #FFD700;
+    border-radius: 50%;
+    z-index: 5;
+    box-shadow: 0 0 5px #FFD700;
+    pointer-events: none;
+    opacity: 1; 
+}
+
+.alert-message {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translate(-50%, 0);
+    padding: 12px 24px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    z-index: 100;
+    font-family: 'El Messiri', sans-serif;
+    opacity: 1;
+    transition: opacity 0.3s ease-out;
+}
+
+.spinner {
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top: 4px solid #FFD700;
+    width: 16px;
+    height: 16px;
+    animation: spin 1s linear infinite;
+    display: inline-block;
+    margin-right: 8px;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
