@@ -1,23 +1,10 @@
 'use client';
 
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback, useState } from 'react';
 import * as THREE from 'three';
+import { ARTIFACT_DATA, type Artifacts } from '@/lib/artifacts';
+import { getSpeechAudio } from './actions';
 
-// This is a simplified type definition based on the data structure in the script.
-// In a full TypeScript application, this would be more detailed.
-type ArtifactData = {
-    title: string;
-    description: string;
-    puzzle: string;
-    position: THREE.Vector3;
-    icon: string;
-    goal: boolean;
-    isExplored: boolean;
-};
-
-type Artifacts = {
-    [key: string]: ArtifactData;
-};
 
 export default function MuseumPage() {
     const mountRef = useRef<HTMLDivElement>(null);
@@ -25,6 +12,10 @@ export default function MuseumPage() {
     const infoPanelRef = useRef<HTMLDivElement>(null);
     const reportModalRef = useRef<HTMLDivElement>(null);
     const blockerRef = useRef<HTMLDivElement>(null);
+    const debugPanelRef = useRef<HTMLDivElement>(null);
+
+    // Use useState for artifact data to make it reactive
+    const [artifacts, setArtifacts] = useState<Artifacts>(ARTIFACT_DATA);
 
     const state = useRef({
         camera: null as THREE.PerspectiveCamera | null,
@@ -53,21 +44,9 @@ export default function MuseumPage() {
         euler: new THREE.Euler(0, 0, 0, 'YXZ'),
         
         lastTime: performance.now(),
-        frameCount: 0,
-        fpsTimer: performance.now(),
 
         currentArtifactName: null as string | null,
 
-        ARTIFACT_DATA: {
-            'mask': { title: 'قناع توت عنخ آمون', description: 'أشهر قطعة أثرية في العالم. مصنوع من الذهب الخالص ومطعم بالأحجار الكريمة.', puzzle: 'لغز: ما هي الألوان الرئيسية التي استخدمها المصريون القدماء لطلاء القناع الذهبي؟', position: new THREE.Vector3(0, 0, -150), icon: 'fas fa-crown', goal: false, isExplored: false },
-            'rosetta': { title: 'حجر رشيد', description: 'لوحة حجرية حاسمة لفك رموز اللغة الهيروغليفية.', puzzle: 'لغز: من هو العالم الفرنسي الذي فك شفرة الحجر في عام 1822؟', position: new THREE.Vector3(-150, 0, 0), icon: 'fas fa-book-open', goal: true, isExplored: false },
-            'canopic': { title: 'الأواني الكانوبية', description: 'الأواني الأربعة المستخدمة لحفظ الأعضاء الداخلية للمتوفى أثناء عملية التحنيط.', puzzle: 'لغز: من هو ابن حورس الذي كان يحمي الرئتين؟', position: new THREE.Vector3(150, 0, 0), icon: 'fas fa-vial', goal: false, isExplored: false },
-            'ramses': { title: 'تمثال رمسيس الثاني', description: 'تمثال ضخم يمثل فرعوناً عظيماً. اشتهر بحكمه الطويل ومشاريع البناء الهائلة.', puzzle: 'لغز: ما هي المعركة الشهيرة التي قادها رمسيس الثاني ضد الحيثيين؟', position: new THREE.Vector3(-150, 0, 150), icon: 'fas fa-gavel', goal: false, isExplored: false },
-            'hatshepsut': { title: 'تمثال حتشبسوت', description: 'أقوى الحاكمات في التاريخ المصري، حكمت كفرعون كامل.', puzzle: 'لغز: ما هو اللقب الذي أطلقته حتشبسوت على نفسها لتأكيد شرعيتها؟', position: new THREE.Vector3(150, 0, 150), icon: 'fas fa-user-tie', goal: false, isExplored: false },
-            'solar_boat': { title: 'مركب الشمس', description: 'سفينة جنائزية عُثر عليها بجوار الهرم الأكبر. كان الهدف منها نقل روح الفرعون في رحلته الأبدية.', puzzle: 'لغز: ما هي المادة الأساسية التي صنع منها المركب بالكامل؟', position: new THREE.Vector3(0, 0, 50), icon: 'fas fa-ship', goal: false, isExplored: false },
-            'tut_dagger': { title: 'خنجر توت النيزكي', description: 'خنجر استثنائي مصنوع بالكامل من حديد نيزكي (جاء من الفضاء).', puzzle: 'لغز: ما هي الميزة غير العادية التي جعلت هذا الخنجر فريداً؟', position: new THREE.Vector3(-50, 0, -50), icon: 'fas fa-meteor', goal: false, isExplored: false },
-            'gold_jewelry': { title: 'حُلي توت الذهبية', description: 'مجموعة من الأساور والقلادات المصنوعة من الذهب والأحجار الكريمة.', puzzle: 'لغز: ما هو رمز الحماية الشائع الذي يظهر في الكثير من الحلي المصرية القديمة؟', position: new THREE.Vector3(50, 0, -50), icon: 'fas fa-gem', goal: false, isExplored: false }
-        } as Artifacts,
         markersMap: {} as { [key: string]: HTMLDivElement },
         tempVector: new THREE.Vector3(),
     }).current;
@@ -99,7 +78,7 @@ export default function MuseumPage() {
     }, [state]);
 
     const showInfoPanel = useCallback((artifactName: string) => {
-        const data = state.ARTIFACT_DATA[artifactName];
+        const data = artifacts[artifactName];
         if (!data || !infoPanelRef.current) return;
 
         state.currentArtifactName = artifactName;
@@ -112,51 +91,49 @@ export default function MuseumPage() {
         
         panel.classList.add('visible');
         state.isBlocked = true;
-    }, [state]);
+    }, [state, artifacts]);
     
     const updateMarkers = useCallback(() => {
-        if (!state.camera) return;
+        if (!state.camera || !state.scene) return;
 
         const width = window.innerWidth;
         const height = window.innerHeight;
         const MAX_MARKER_DISTANCE = 1000;
 
-        for (const name in state.ARTIFACT_DATA) {
-            state.scene?.traverse(object => {
-                const obj = object as THREE.Mesh;
-                if (obj.userData.name === name && obj.userData.markerPosition) {
-                    const marker = state.markersMap[name];
-                    if (!marker) return;
+        for (const name in artifacts) {
+            const obj = state.scene.getObjectByName(`exhibit-${name}`);
+            if (obj && obj.userData.markerPosition) {
+                const marker = state.markersMap[name];
+                if (!marker) continue;
 
-                    state.tempVector.copy(obj.userData.markerPosition);
-                    state.tempVector.project(state.camera!);
+                state.tempVector.copy(obj.userData.markerPosition);
+                state.tempVector.project(state.camera);
 
-                    const markerX = (state.tempVector.x * 0.5 + 0.5) * width;
-                    const markerY = (state.tempVector.y * -0.5 + 0.5) * height;
+                const markerX = (state.tempVector.x * 0.5 + 0.5) * width;
+                const markerY = (state.tempVector.y * -0.5 + 0.5) * height;
 
-                    const distance = state.camera!.position.distanceTo(obj.userData.markerPosition);
+                const distance = state.camera.position.distanceTo(obj.userData.markerPosition);
 
-                    if (state.tempVector.z < 1 && distance < MAX_MARKER_DISTANCE) {
-                        marker.style.display = 'flex';
-                        marker.style.left = `${markerX}px`;
-                        marker.style.top = `${markerY}px`;
+                if (state.tempVector.z < 1 && distance < MAX_MARKER_DISTANCE) {
+                    marker.style.display = 'flex';
+                    marker.style.left = `${markerX}px`;
+                    marker.style.top = `${markerY}px`;
 
-                        const scale = Math.max(0.9, Math.min(1.5, 300 / distance));
-                        const opacity = Math.max(0.5, Math.min(1.0, 200 / distance));
+                    const scale = Math.max(0.9, Math.min(1.5, 300 / distance));
+                    const opacity = Math.max(0.5, Math.min(1.0, 200 / distance));
 
-                        marker.style.transform = `translate(-50%, -50%) scale(${scale})`;
-                        marker.style.opacity = opacity.toString();
-                    } else {
-                        marker.style.display = 'none';
-                    }
+                    marker.style.transform = `translate(-50%, -50%) scale(${scale})`;
+                    marker.style.opacity = opacity.toString();
+                } else {
+                    marker.style.display = 'none';
                 }
-            });
+            }
         }
-    }, [state]);
+    }, [state, artifacts]);
 
     const animate = useCallback((currentTime: number) => {
-        if (!state.renderer || !state.scene || !state.camera) return;
         requestAnimationFrame(animate);
+        if (!state.renderer || !state.scene || !state.camera) return;
 
         try {
             const delta = (currentTime - state.lastTime) / 1000;
@@ -165,7 +142,8 @@ export default function MuseumPage() {
             state.euler.y = THREE.MathUtils.degToRad(state.lon);
             state.euler.x = THREE.MathUtils.degToRad(state.lat);
             state.camera.quaternion.setFromEuler(state.euler);
-
+            
+            const speed = 150.0;
             if (!state.isBlocked && !state.isReportVisible && state.isMoving) {
                 const forward = state.forwardVector.clone().applyQuaternion(state.camera.quaternion);
                 forward.y = 0;
@@ -183,20 +161,13 @@ export default function MuseumPage() {
             }
 
             updateMarkers();
-            
-            // Simplified debug info for React
-            const camPos = state.camera.position;
-            const debugPanel = document.getElementById('debug-panel');
-            if (debugPanel) {
-                (debugPanel.querySelector('#cam-pos') as HTMLElement).textContent = `${camPos.x.toFixed(0)}, ${camPos.y.toFixed(0)}, ${camPos.z.toFixed(0)}`;
-            }
 
             state.renderer.render(state.scene, state.camera);
 
         } catch (error) {
             console.error("Error during animation frame:", error);
         }
-    }, [state, speed, updateMarkers]);
+    }, [state, updateMarkers]);
 
     useEffect(() => {
         if (!mountRef.current) return;
@@ -252,14 +223,15 @@ export default function MuseumPage() {
                 state.scene.add(ceiling);
 
                 // Exhibits
-                for (const name in state.ARTIFACT_DATA) {
-                    const data = state.ARTIFACT_DATA[name as keyof typeof state.ARTIFACT_DATA];
+                for (const name in artifacts) {
+                    const data = artifacts[name as keyof typeof artifacts];
+                    
                     const base = new THREE.Mesh(new THREE.BoxGeometry(30, 10, 30), new THREE.MeshStandardMaterial({ color: 0x666666, metalness: 0.5, roughness: 0.5 }));
                     base.position.copy(data.position);
                     base.position.y = 5;
                     base.receiveShadow = true;
                     base.castShadow = true;
-                    base.userData.name = name;
+                    base.name = `exhibit-${name}`;
 
                     const artifactMesh = new THREE.Mesh(new THREE.BoxGeometry(10, 10, 10), new THREE.MeshStandardMaterial({ color: data.goal ? 0xFF0000 : 0xFFD700, metalness: 0.9, roughness: 0.1, emissive: data.goal ? 0x990000 : 0xAA8800, emissiveIntensity: 0.5 }));
                     artifactMesh.position.y = 10;
@@ -277,8 +249,8 @@ export default function MuseumPage() {
                 // Markers
                 const container = markersContainerRef.current;
                 if(container){
-                    for (const name in state.ARTIFACT_DATA) {
-                        const data = state.ARTIFACT_DATA[name as keyof typeof state.ARTIFACT_DATA];
+                    for (const name in artifacts) {
+                        const data = artifacts[name as keyof typeof artifacts];
                         const markerDiv = document.createElement('div');
                         markerDiv.className = 'artifact-marker';
                         markerDiv.id = `marker-${name}`;
@@ -299,7 +271,6 @@ export default function MuseumPage() {
 
         init();
 
-        // Event listeners
         const onStartClick = () => {
             if (blockerRef.current) blockerRef.current.classList.add('hidden');
             state.isBlocked = false;
@@ -418,14 +389,17 @@ export default function MuseumPage() {
                 }
             }
         };
-    }, [state, animate, alertMessage, showInfoPanel, hideInfoPanel]);
+    }, [state, animate, alertMessage, showInfoPanel, hideInfoPanel, artifacts]);
 
-    // React component handlers
     const handleTogglePuzzle = () => {
         const puzzleContent = infoPanelRef.current?.querySelector('#puzzle-content');
         puzzleContent?.classList.toggle('hidden');
         if (state.currentArtifactName) {
-             state.ARTIFACT_DATA[state.currentArtifactName as keyof typeof state.ARTIFACT_DATA].isExplored = true;
+             setArtifacts(prev => {
+                const newArtifacts = { ...prev };
+                newArtifacts[state.currentArtifactName!].isExplored = true;
+                return newArtifacts;
+             });
         }
     };
     
@@ -436,20 +410,27 @@ export default function MuseumPage() {
         if (!speakButton || (speakButton as HTMLButtonElement).disabled) return;
 
         (speakButton as HTMLButtonElement).disabled = true;
-        speakButton.textContent = '...جاري التحميل';
+        speakButton.innerHTML = `<span class="spinner"></span> ...جاري التحميل`;
         alertMessage('جاري تحويل النص إلى كلام...', 'info');
         
-        // This is a placeholder. In the real app, we will use a server action
-        // to call the Genkit flow for security and reliability.
-        alertMessage('ميزة الصوت غير متوفرة في هذا النموذج الأولي. سيتم ربطها بالـ AI قريبًا.', 'info');
+        const artifact = artifacts[state.currentArtifactName];
+        const textToSpeak = `التحفة: ${artifact.title}. الوصف: ${artifact.description}`;
+
+        const result = await getSpeechAudio({ text: textToSpeak });
+
+        if (result.success) {
+            const audio = new Audio(result.success);
+            audio.play().catch(e => console.error("Audio play failed", e));
+            alertMessage('تم تشغيل وصف التحفة بنجاح.', 'success');
+        } else {
+            alertMessage(result.error || 'فشل في توليد الصوت.', 'error');
+        }
         
-        setTimeout(() => {
-             (speakButton as HTMLButtonElement).disabled = false;
-             speakButton.innerHTML = `<i class="fas fa-volume-up ml-2"></i> استمع للوصف`;
-        }, 2000);
+        (speakButton as HTMLButtonElement).disabled = false;
+        speakButton.innerHTML = `<i class="fas fa-volume-up ml-2"></i> استمع للوصف`;
     };
 
-    const updateReportContent = () => {
+    const updateReportContent = useCallback(() => {
         const modal = reportModalRef.current;
         if (!modal) return;
 
@@ -460,7 +441,7 @@ export default function MuseumPage() {
         let exploredCount = 0;
         let isGoalAchieved = false;
 
-        Object.entries(state.ARTIFACT_DATA).forEach(([name, data]) => {
+        Object.entries(artifacts).forEach(([name, data]) => {
             if (data.isExplored) {
                 exploredCount++;
                 if (data.goal) isGoalAchieved = true;
@@ -484,7 +465,7 @@ export default function MuseumPage() {
             goalTextElement.textContent = 'لم يتم الوصول إليه بعد';
             goalStatusElement.classList.replace('text-green-400', 'text-red-400');
         }
-    };
+    }, [artifacts]);
 
     const showReportModal = () => {
         if(reportModalRef.current) reportModalRef.current.style.display = 'flex';
@@ -528,7 +509,7 @@ export default function MuseumPage() {
                 <i className="fas fa-graduation-cap ml-2"></i> تقرير الطالب
             </button>
             
-            <div id="debug-panel" className="fixed top-10 right-10 z-[100] text-white bg-black/50 p-2 rounded hidden">
+            <div ref={debugPanelRef} id="debug-panel" className="fixed top-10 right-10 z-[100] text-white bg-black/50 p-2 rounded hidden">
                 <div>FPS: <span id="fps-value">0</span></div>
                 <div>Dragging: <span id="dragging-status">No</span></div>
                 <div>Moving: <span id="moving-status">No</span></div>
