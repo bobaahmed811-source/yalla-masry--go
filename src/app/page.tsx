@@ -1,6 +1,7 @@
 
 'use client';
 import { useEffect } from 'react';
+import Link from 'next/link';
 
 export default function RoyalDashboard() {
   
@@ -19,6 +20,7 @@ export default function RoyalDashboard() {
           completed_label: "مُكتمل", locked_label: "مُغلق",
           user_id_label: "User ID:",
           leaderboard_1: "الملكة حتشبسوت", leaderboard_2: "امنحتب الحكيم", leaderboard_4: "نفرتيتي الرشيقة",
+          comic_studio_button: "استوديو القصص المصورة",
       },
       en: {
           title: "Royal Control Panel", alias_label: "Your Pharaonic Alias:", alias_placeholder: "Enter your Pharaonic name here...", alias_button: "Update Alias",
@@ -30,6 +32,7 @@ export default function RoyalDashboard() {
           completed_label: "Completed", locked_label: "Locked",
           user_id_label: "User ID:",
           leaderboard_1: "Queen Hatshepsut", leaderboard_2: "Amenhotep the Wise", leaderboard_4: "Nefertiti the Graceful",
+          comic_studio_button: "Comic Studio",
       },
       fr: {
           title: "Panneau de Contrôle Royal", alias_label: "Votre Alias Pharaonique:", alias_placeholder: "Entrez votre nom pharaonique ici...", alias_button: "Mettre à Jour",
@@ -41,6 +44,7 @@ export default function RoyalDashboard() {
           completed_label: "Terminé", locked_label: "Verrouillé",
           user_id_label: "ID Utilisateur:",
           leaderboard_1: "Reine Hatchepsout", leaderboard_2: "Amenhotep le Sage", leaderboard_4: "Néfertiti la Gracieuse",
+          comic_studio_button: "Studio de BD",
       },
       es: { 
           title: "Panel de Control Real", alias_label: "Tu Alias Faraónico:", alias_placeholder: "Introduce tu nombre faraónico aquí...", alias_button: "Actualizar Alias",
@@ -52,6 +56,7 @@ export default function RoyalDashboard() {
           completed_label: "Completado", locked_label: "Bloqueado",
           user_id_label: "ID de Usuario:",
           leaderboard_1: "Reina Hatshepsut", leaderboard_2: "Amenhotep el Sabio", leaderboard_4: "Nefertiti la Grácil",
+          comic_studio_button: "Estudio de Cómics",
       },
       zh: { 
           title: "皇家控制面板", alias_label: "您的法老别名:", alias_placeholder: "在此输入您的法老名字...", alias_button: "更新别名",
@@ -63,6 +68,7 @@ export default function RoyalDashboard() {
           completed_label: "已完成", locked_label: "已锁定",
           user_id_label: "用户 ID:",
           leaderboard_1: "哈特谢普苏特女王", leaderboard_2: "阿蒙霍特普智者", leaderboard_4: "美丽者纳芙蒂蒂",
+          comic_studio_button: "漫画工作室",
       },
       it: { 
           title: "Pannello di Controllo Reale", alias_label: "Il Tuo Alias Faraonico:", alias_placeholder: "Inserisci qui il tuo nome faraonico...", alias_button: "Aggiorna Alias",
@@ -74,6 +80,7 @@ export default function RoyalDashboard() {
           completed_label: "Completato", locked_label: "Bloccato",
           user_id_label: "ID Utente:",
           leaderboard_1: "Regina Hatshepsut", leaderboard_2: "Amenhotep il Saggio", leaderboard_4: "Nefertiti la Graziosa",
+          comic_studio_button: "Studio di Fumetti",
       },
       nl: { 
           title: "Koninklijk Controlepaneel", alias_label: "Uw Faraonische Alias:", alias_placeholder: "Voer hier uw faraonische naam in...", alias_button: "Alias Updaten",
@@ -85,6 +92,7 @@ export default function RoyalDashboard() {
           completed_label: "Voltooid", locked_label: "Vergrendeld",
           user_id_label: "Gebruiker ID:",
           leaderboard_1: "Koningin Hatsjepsoet", leaderboard_2: "Amenhotep de Wijze", leaderboard_4: "Nefertiti de Sierlijke",
+          comic_studio_button: "Stripstudio",
       },
       de: { 
           title: "Königliches Bedienfeld", alias_label: "Ihr Pharaonischer Alias:", alias_placeholder: "Geben Sie hier Ihren Pharaonischen Namen ein...", alias_button: "Alias Aktualisieren",
@@ -96,6 +104,7 @@ export default function RoyalDashboard() {
           completed_label: "Abgeschlossen", locked_label: "Gesperrt",
           user_id_label: "Benutzer ID:",
           leaderboard_1: "Königin Hatschepsut", leaderboard_2: "Amenhotep der Weise", leaderboard_4: "Nofretete die Anmutige",
+          comic_studio_button: "Comic-Studio",
       }
     };
   
@@ -131,11 +140,14 @@ export default function RoyalDashboard() {
   
       querySelector('#library-button-text').textContent = texts.library_button;
       querySelector('#review-button-text').textContent = texts.review_button;
+      querySelector('#comic-studio-button-text').textContent = texts.comic_studio_button;
   
       const libraryIcon = querySelector('#library-button i');
       if (libraryIcon) libraryIcon.className = `fas fa-archive text-xl ${isRtl ? 'ml-3' : 'mr-3'}`;
       const reviewIcon = querySelector('#review-button i');
       if (reviewIcon) reviewIcon.className = `fas fa-redo-alt text-xl ${isRtl ? 'ml-3' : 'mr-3'}`;
+       const comicStudioIcon = querySelector('#comic-studio-button i');
+      if (comicStudioIcon) comicStudioIcon.className = `fas fa-paint-brush text-xl ${isRtl ? 'ml-3' : 'mr-3'}`;
       
       const reviewCount = querySelector('#review-count');
       if (reviewCount) {
@@ -278,6 +290,10 @@ export default function RoyalDashboard() {
                     <span id="review-button-text">كلمات تحتاج إلى مراجعة</span>
                     <span id="review-count" className="bg-red-600 text-white text-xs font-extrabold px-2 py-0.5 rounded-full mr-2">12</span>
                 </button>
+                 <Link href="/comic-studio" id="comic-studio-button" className="utility-button px-6 py-3 text-lg font-bold rounded-full flex items-center justify-center border-amber-400 text-amber-400">
+                    <i className="fas fa-paint-brush text-xl ml-3"></i>
+                    <span id="comic-studio-button-text">استوديو القصص المصورة</span>
+                </Link>
             </div>
 
             <div className="dashboard-card p-6 md:p-10 rounded-2xl">
