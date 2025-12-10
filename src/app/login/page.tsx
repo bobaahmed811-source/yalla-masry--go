@@ -15,17 +15,32 @@ import { useAuth } from '@/firebase';
 import { initiateEmailSignIn } from '@/firebase/non-blocking-login';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
 
 export default function LoginPage() {
   const auth = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    initiateEmailSignIn(auth, email, password);
-    router.push('/');
+    initiateEmailSignIn(auth, email, password, (user) => {
+        if(user) {
+            toast({
+                title: `مرحباً بعودتك يا ${user.displayName || 'فرعون'}!`,
+                description: "تم تسجيل دخولك بنجاح."
+            });
+            router.push('/');
+        } else {
+            toast({
+                variant: "destructive",
+                title: "فشل تسجيل الدخول",
+                description: "البريد الإلكتروني أو كلمة السر غير صحيحة. يرجى المحاولة مرة أخرى."
+            });
+        }
+    });
   };
 
   return (

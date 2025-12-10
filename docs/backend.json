@@ -33,7 +33,8 @@
       "required": [
         "id",
         "email",
-        "alias"
+        "alias",
+        "name"
       ]
     },
     "Course": {

@@ -12,22 +12,31 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/firebase';
-import { initiateEmailSignUp } from '@/firebase/non-blocking-login';
+import { initiateEmailSignUp, updateProfileNonBlocking } from '@/firebase/non-blocking-login';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
 
 export default function SignupPage() {
   const auth = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   const handleSignup = (e: React.FormEvent) => {
     e.preventDefault();
-    // We can extend this later to also save the name to Firestore
-    initiateEmailSignUp(auth, email, password);
-    router.push('/goals');
+    initiateEmailSignUp(auth, email, password, (user) => {
+        if (user) {
+            updateProfileNonBlocking(user, { displayName: name });
+            toast({
+                title: "تم إنشاء الحساب بنجاح!",
+                description: "سيتم توجيهك الآن لتحديد أهدافك."
+            });
+            router.push('/goals');
+        }
+    });
   };
 
   return (
