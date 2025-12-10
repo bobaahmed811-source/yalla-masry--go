@@ -1,15 +1,16 @@
 
 'use client';
 
-import React, { useState, useMemo, useCallback } from 'react';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import React, { useState, useMemo } from 'react';
+import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, addDoc } from 'firebase/firestore';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Star, Clock, Tag, CalendarCheck, CheckCircle, Crown, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 // Define the type for an instructor from Firestore
 interface Instructor {
@@ -65,6 +66,7 @@ const generateMockSchedule = (instructors: Instructor[]) => {
 
 
 export default function BookingPage() {
+  const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
 
@@ -78,6 +80,9 @@ export default function BookingPage() {
   const [selectedLesson, setSelectedLesson] = useState<any>(null);
   const [bookingStatus, setBookingStatus] = useState<'idle' | 'confirming' | 'confirmed'>('idle');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const appId = 'yalla-masry-academy'; // This would typically come from env variables
+  const purchasesCollectionPath = `/artifacts/${appId}/public/data/digital_purchases`;
 
   // Memoize the schedule generation
   const scheduleByDate = useMemo(() => {
@@ -98,18 +103,36 @@ export default function BookingPage() {
     }
   };
 
-  const handleConfirmBooking = () => {
-    if (!selectedLesson) return;
+  const handleConfirmBooking = async () => {
+    if (!selectedLesson || !user || !firestore) {
+        toast({ variant: 'destructive', title: 'خطأ', description: 'لا يمكن إتمام الحجز. يرجى التأكد من تسجيل الدخول وتوفر خدمة قاعدة البيانات.'});
+        return;
+    }
     setIsSubmitting(true);
-    // In a real app, this would trigger the purchase flow we discussed
-    setTimeout(() => {
-      setBookingStatus('confirmed');
-      toast({
-        title: "✅ تم تسجيل طلب الحجز بنجاح",
-        description: "سيتم التواصل معكِ من قبل الإدارة لتأكيد الدفع والموعد.",
-      });
-      setIsSubmitting(false);
-    }, 1500);
+    
+    const purchaseData = {
+        userId: user.uid,
+        productId: `lesson_${selectedLesson.instructorId}_${selectedLesson.date}_${selectedLesson.time}`,
+        productDescription: `حجز درس مع ${selectedLesson.teacherName} في ${formatDate(selectedLesson.date)} الساعة ${selectedLesson.time}`,
+        price: selectedLesson.price,
+        status: 'Awaiting Payment' as const,
+        purchaseDate: new Date().toISOString(),
+        isGift: false,
+    };
+
+    try {
+        await addDocumentNonBlocking(collection(firestore, purchasesCollectionPath), purchaseData);
+        setBookingStatus('confirmed');
+        toast({
+            title: "✅ تم تسجيل طلب الحجز بنجاح",
+            description: "سيتم التواصل معكِ من قبل الإدارة لتأكيد الدفع والموعد.",
+        });
+    } catch(error) {
+        console.error("Booking error: ", error);
+        toast({ variant: 'destructive', title: 'خطأ في الحجز', description: 'لم نتمكن من تسجيل طلب الحجز. يرجى المحاولة مرة أخرى.' });
+    } finally {
+        setIsSubmitting(false);
+    }
   };
   
   const resetBooking = () => {
@@ -188,12 +211,18 @@ export default function BookingPage() {
                     <p className="flex items-center gap-2"><Clock className="text-gold-accent"/> <strong>المدة:</strong> {selectedLesson.duration} دقيقة</p>
                     <p className="flex items-center gap-2"><Tag className="text-gold-accent"/> <strong>التكلفة:</strong> <span className="font-black text-2xl text-white">${selectedLesson.price}</span></p>
 
+                    {!user && (
+                         <p className="text-center mt-6 p-4 bg-red-900/50 text-red-300 border border-red-500 rounded-lg">
+                            يجب <Link href="/login" className="font-bold underline">تسجيل الدخول</Link> لتأكيد الحجز.
+                         </p>
+                    )}
+
                     <div className="mt-6 flex justify-between items-center gap-4">
                         <Button onClick={resetBooking} variant="outline" className="utility-button flex-1">
                             تغيير الموعد
                         </Button>
-                        <Button onClick={handleConfirmBooking} className="cta-button flex-1" disabled={isSubmitting}>
-                          {isSubmitting ? 'جاري الإرسال...' : 'تأكيد الحجز والدفع'}
+                        <Button onClick={handleConfirmBooking} className="cta-button flex-1" disabled={isSubmitting || !user}>
+                          {isSubmitting ? 'جاري الإرسال...' : 'تأكيد الحجز وطلب الدفع'}
                         </Button>
                     </div>
                 </CardContent>
