@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -6,7 +5,9 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { useUser } from '@/firebase';
-import { ArrowRight, BookOpen, Crown, Gem, LogIn, UserPlus } from 'lucide-react';
+import { ArrowRight, BookOpen, Crown, Gem, LogIn, UserPlus, LogOut } from 'lucide-react';
+import { initiateSignOut } from '@/firebase/non-blocking-login';
+import { useAuth } from '@/firebase';
 
 const StatCard = ({ icon, value, label }: { icon: React.ReactNode, value: string, label: string }) => (
     <Card className="stat-card p-4">
@@ -36,11 +37,17 @@ const ChallengeLink = ({ href, title, description, icon }: { href: string; title
 
 export default function HomePage() {
     const { user, isUserLoading } = useUser();
+    const auth = useAuth();
     
     // Default alias if user is not loaded or doesn't have one
     const alias = user?.displayName || 'الزائر الملكي';
     const nilePoints = 1250; // Mock data
-    const progress = 15; // Mock data
+    
+    const handleSignOut = () => {
+      if (auth) {
+        initiateSignOut(auth);
+      }
+    };
 
     return (
         <div className="min-h-screen bg-nile-dark text-white p-4 md:p-8" style={{ direction: 'rtl' }}>
@@ -52,11 +59,17 @@ export default function HomePage() {
                 ) : user ? (
                     // Authenticated User Dashboard
                     <>
-                        <header className="mb-10">
-                            <h1 className="text-4xl md:text-5xl font-black royal-title mb-2">
-                                مرحباً بعودتكِ يا <span className="text-white">{alias}</span>!
-                            </h1>
-                            <p className="text-xl text-sand-ochre">لوحة التحكم الملكية الخاصة بكِ في أكاديمية يلا مصري.</p>
+                        <header className="mb-10 flex justify-between items-center">
+                            <div>
+                                <h1 className="text-4xl md:text-5xl font-black royal-title mb-2">
+                                    مرحباً بعودتكِ يا <span className="text-white">{alias}</span>!
+                                </h1>
+                                <p className="text-xl text-sand-ochre">لوحة التحكم الملكية الخاصة بكِ في أكاديمية يلا مصري.</p>
+                            </div>
+                            <Button onClick={handleSignOut} variant="outline" className="utility-button">
+                                <LogOut className="ml-2 h-4 w-4"/>
+                                تسجيل الخروج
+                            </Button>
                         </header>
 
                         <main>
@@ -103,7 +116,7 @@ export default function HomePage() {
                     <div className="flex flex-col items-center justify-center min-h-[80vh] text-center">
                         <Crown className="w-24 h-24 text-gold-accent mb-4" />
                         <h1 className="text-5xl md:text-6xl font-black royal-title mb-4">
-                          أكاديمية يلا مصري
+                          أهلاً بكِ في أكاديمية يلا مصري
                         </h1>
                         <p className="text-2xl text-sand-ochre mb-10 max-w-2xl">
                           البوابة الملكية للنساء والأطفال لإتقان اللهجة المصرية في بيئة آمنة وممتعة.
@@ -114,7 +127,7 @@ export default function HomePage() {
                         </div>
                          <div className="mt-8">
                              <Link href="/landing" className="text-sand-ochre hover:text-gold-accent transition-colors underline">
-                                تصفح صفحة الهبوط
+                                أو تصفحي صفحة الهبوط الكاملة
                             </Link>
                         </div>
                     </div>
@@ -123,5 +136,3 @@ export default function HomePage() {
         </div>
     );
 }
-
-    
