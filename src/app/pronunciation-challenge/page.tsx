@@ -12,7 +12,6 @@ import { Button } from '@/components/ui/button';
 import {
   VolumeUp,
   Loader,
-  Play,
   Mic,
   ChevronLeft,
   ChevronRight,
@@ -20,6 +19,7 @@ import {
 } from 'lucide-react';
 import { getSpeechAudio } from './actions';
 import { useToast } from '@/hooks/use-toast';
+import Link from 'next/link';
 
 // Dictionary for all UI texts
 const lang: Record<string, Record<string, string>> = {
@@ -31,6 +31,7 @@ const lang: Record<string, Record<string, string>> = {
     error: 'حدث خطأ: لا يمكن تشغيل الصوت.',
     record: 'سجل صوتك',
     next: 'التالي',
+    go_back: 'العودة للوحة التحكم',
   },
   en: {
     title: 'The Royal Pronunciation Challenge',
@@ -40,6 +41,7 @@ const lang: Record<string, Record<string, string>> = {
     error: 'An error occurred: Cannot play audio.',
     record: 'Record Your Voice',
     next: 'Next',
+    go_back: 'Back to Dashboard',
   },
   // Add other languages as needed
 };
@@ -50,7 +52,6 @@ export default function PronunciationChallengePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isRecording, setIsRecording] = useState(false); // Placeholder for future use
   const [isChallengeCompleted, setIsChallengeCompleted] = useState(false);
 
   const { toast } = useToast();
@@ -100,20 +101,28 @@ export default function PronunciationChallengePage() {
             description: 'يمكنك تسجيل صوتك للممارسة.',
         });
       };
+      audio.onerror = () => {
+        setIsPlaying(false);
+        setError(texts.error);
+        toast({
+          variant: 'destructive',
+          title: '❌ خطأ في التشغيل',
+          description: 'لم نتمكن من تشغيل الملف الصوتي.',
+        });
+      }
     }
   };
 
   const handleLanguageChange = (langCode: string) => {
     setCurrentLang(langCode);
-    // Optionally, you might want to refetch audio if the voice should change per language,
-    // but for now we assume the core phrase is always Egyptian Arabic.
+    // UI texts will update automatically due to state change
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4">
-      <div className="fixed top-4 right-4 z-10">
+    <div dir={isRtl ? 'rtl' : 'ltr'} className="flex items-center justify-center min-h-screen bg-gray-100 p-4">
+       <div className="fixed top-4 right-4 z-10 flex items-center gap-4">
         <Select onValueChange={handleLanguageChange} defaultValue={currentLang}>
-          <SelectTrigger className="w-[180px] bg-nile text-white border-none">
+          <SelectTrigger className="w-[180px] bg-nile text-white border-none royal-title">
             <SelectValue placeholder="Language" />
           </SelectTrigger>
           <SelectContent>
@@ -123,6 +132,10 @@ export default function PronunciationChallengePage() {
             <SelectItem value="es">Español (ES)</SelectItem>
           </SelectContent>
         </Select>
+         <Link href="/" className="utility-button px-4 py-2 text-md font-bold rounded-lg flex items-center justify-center">
+            <i className={`fas fa-arrow-left ${isRtl ? 'ml-2' : 'mr-2'}`}></i>
+            <span>{texts.go_back}</span>
+        </Link>
       </div>
 
       <div className="w-full max-w-xl p-6 bg-white rounded-2xl shadow-2xl border-t-8 border-gold-accent">
@@ -148,10 +161,12 @@ export default function PronunciationChallengePage() {
             id="play-button"
             onClick={handlePlayAudio}
             disabled={isLoading || !audioUrl || isPlaying}
-            className="shadow-lg mb-8 w-20 h-20 rounded-full bg-nile text-white text-3xl mx-auto flex items-center justify-center hover:bg-nile-dark transition-all duration-300"
+            className="shadow-lg mb-8 w-20 h-20 rounded-full bg-nile text-white text-3xl mx-auto flex items-center justify-center hover:bg-nile-dark transition-all duration-300 disabled:bg-gray-400"
           >
             {isLoading ? (
               <Loader className="animate-spin" />
+            ) : isPlaying ? (
+                <i className="fas fa-pause"></i>
             ) : (
               <VolumeUp size={30} />
             )}
