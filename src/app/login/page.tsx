@@ -58,7 +58,7 @@ export default function LoginPage() {
                   <Label htmlFor="password" className="text-sand-ochre">كلمة السر</Label>
                   <Link
                     href="#"
-                    className="ml-auto inline-block text-sm text-sand-ochre underline"
+                    className="mr-auto inline-block text-sm text-sand-ochre underline"
                   >
                     نسيت كلمة السر؟
                   </Link>
