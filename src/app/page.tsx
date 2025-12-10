@@ -171,6 +171,10 @@ export default function HomePage() {
                     <i className="fas fa-users text-xl ml-3"></i>
                     <span>ساحة الحوار المجتمعي</span>
                 </Link>
+                 <Link href="/quran" className="utility-button px-6 py-3 text-lg font-bold rounded-full flex items-center justify-center border-sky-300 text-sky-300">
+                    <i className="fas fa-quran text-xl ml-3"></i>
+                    <span>واحة القرآن والسنة</span>
+                </Link>
                 <Link href="/placement-test" className="utility-button px-6 py-3 text-lg font-bold rounded-full flex items-center justify-center border-orange-400 text-orange-400 col-span-1 sm:col-span-2 md:col-span-3 lg:col-span-4">
                     <i className="fas fa-tasks text-xl ml-3"></i>
                     <span>إعادة اختبار تحديد المستوى</span>
@@ -282,4 +286,5 @@ export default function HomePage() {
   );
 }
 
+    
     
