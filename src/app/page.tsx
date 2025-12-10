@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 
 export default function RoyalDashboard() {
@@ -21,7 +21,7 @@ export default function RoyalDashboard() {
 
   useEffect(() => {
     async function fetchUserAlias() {
-      if (userDocRef) {
+      if (userDocRef && user) {
         try {
             const docSnap = await getDoc(userDocRef);
             if (docSnap.exists() && docSnap.data().alias) {
@@ -31,10 +31,16 @@ export default function RoyalDashboard() {
             } else if (user && !docSnap.exists()) {
               // If no alias and no doc, set initial one in db
               const initialAlias = "تحتمس القوي";
+              const initialData = { 
+                alias: initialAlias, 
+                id: user.uid, 
+                email: user.email, 
+                name: user.displayName || 'Anonymous', 
+                registrationDate: new Date().toISOString() 
+              };
+              await setDoc(userDocRef, initialData);
               setPharaonicAlias(initialAlias);
               setAliasInput(initialAlias);
-              const initialData = { alias: initialAlias, id: user.uid, email: user.email, name: user.displayName || 'Anonymous', registrationDate: new Date().toISOString() };
-              await updateDoc(userDocRef, initialData, { merge: true });
             }
         } catch (error) {
             console.error("Error fetching user alias:", error);
@@ -262,3 +268,4 @@ export default function RoyalDashboard() {
     </div>
   );
 }
+

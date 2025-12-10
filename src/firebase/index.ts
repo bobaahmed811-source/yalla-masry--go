@@ -3,7 +3,7 @@
 import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore, addDoc, collection } from 'firebase/firestore'
+import { getFirestore, addDoc, collection, setDoc } from 'firebase/firestore'
 
 // IMPORTANT: DO NOT MODIFY THIS FUNCTION
 export function initializeFirebase() {
@@ -51,4 +51,4 @@ export * from './error-emitter';
 
 // Explicitly export addDocumentNonBlocking from the top-level index
 export { addDocumentNonBlocking } from './non-blocking-updates';
-export { addDoc, collection };
+export { addDoc, collection, setDoc };
