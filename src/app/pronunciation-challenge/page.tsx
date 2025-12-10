@@ -19,7 +19,6 @@ import {
   AlertTriangle,
   Play,
   Pause,
-  CheckCircle,
 } from 'lucide-react';
 import { getSpeechAudio } from './actions';
 import { useToast } from '@/hooks/use-toast';
@@ -317,3 +316,5 @@ export default function PronunciationChallengePage() {
     </div>
   );
 }
+
+    
