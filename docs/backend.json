@@ -305,7 +305,8 @@
               "Children",
               "Women",
               "Egyptian Dialect",
-              "Conversation"
+              "Conversation",
+              "Quran"
             ]
           }
         },
@@ -601,6 +602,34 @@
         }
       },
       "required": ["id", "userId", "scene", "generatedDialog", "recordingDate", "audioMimeType", "status"]
+    },
+    "Book": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "Book",
+        "type": "object",
+        "description": "Represents a book in the Islamic digital library.",
+        "properties": {
+            "id": { "type": "string", "description": "Unique identifier for the Book." },
+            "title": { "type": "string", "description": "Title of the book." },
+            "author": { "type": "string", "description": "Author of the book." },
+            "description": { "type": "string", "description": "A short description of the book." },
+            "category": { "type": "string", "description": "Category of the book (e.g., 'Tafsir', 'Hadith')." },
+            "cover": { "type": "string", "format": "uri", "description": "URL to the book cover image." }
+        },
+        "required": ["id", "title", "author", "description", "category", "cover"]
+    },
+    "Hadith": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "Hadith",
+        "type": "object",
+        "description": "Represents a single Hadith in the Sunnah section.",
+        "properties": {
+            "id": { "type": "string", "description": "Unique identifier for the Hadith." },
+            "text": { "type": "string", "description": "The text of the Hadith." },
+            "source": { "type": "string", "description": "The source of the Hadith (e.g., 'Sahih Bukhari')." },
+            "topic": { "type": "string", "description": "The main topic or chapter of the Hadith." }
+        },
+        "required": ["id", "text", "source", "topic"]
     }
   },
   "auth": {
@@ -863,8 +892,30 @@
             { "name": "performanceId", "description": "The unique identifier for the performance record." }
           ]
         }
+      },
+      {
+        "path": "/books/{bookId}",
+        "definition": {
+          "entityName": "Book",
+          "schema": { "$ref": "#/backend/entities/Book" },
+          "description": "Stores books for the digital library. Publicly readable.",
+          "params": [
+            { "name": "bookId", "description": "The unique identifier for the book." }
+          ]
+        }
+      },
+      {
+        "path": "/hadiths/{hadithId}",
+        "definition": {
+          "entityName": "Hadith",
+          "schema": { "$ref": "#/backend/entities/Hadith" },
+          "description": "Stores Hadiths for the Sunnah section. Publicly readable.",
+          "params": [
+            { "name": "hadithId", "description": "The unique identifier for the Hadith." }
+          ]
+        }
       }
     ],
-    "reasoning": "This Firestore structure prioritizes security and scalability for the EdTech platform, focusing on authorization independence and clear access patterns. It leverages path-based ownership for user-specific data and membership maps for collaborative data access, eliminating the need for `get()` calls in security rules and ensuring atomic operations.\n\nThe core principle is **Authorization Independence**. For the `/artifacts/{appId}/public/data/digital_purchases` collection, even though the data is 'public', security is maintained because each document contains the `userId`. Rules are structured to ensure only the authenticated user can create a purchase request for themselves. The `appId` parameter in the path allows for segregation and management of data within specific application contexts, which is useful for multi-tenant environments or different versions of the EdTech platform.\n\n**QAPs (Rules are not Filters):**\n*   The structure supports secure `list` operations by segregating data into collections with homogeneous security postures. For example, purchase requests are stored in a dedicated collection `/artifacts/{appId}/public/data/digital_purchases`, where access is controlled based on the `userId` within each document, allowing for listing purchases securely.\n\n**Denormalization**: The `userId` is denormalized into the `/artifacts/{appId}/public/data/digital_purchases` collection, where access control can depend directly on the attributes stored in the document. A new `/instructors/{instructorId}/reviews/{reviewId}` path is added for storing student reviews. This is publicly readable but writing is restricted to authenticated users to prevent spam. A new collection for `instructors` has been added to support the admin dashboard functionality, with rules initially allowing any signed-in user to manage them for ease of prototyping.\n\nA new `community_messages` collection is added for the public chat feature. Security rules are configured to allow any authenticated user to read from and write to this collection, fostering an open communication environment for students. Updates and deletes are disallowed to maintain the integrity of the chat history. A new path for `comic_performances` is added under `/artifacts/{appId}/users/{userId}` to store user-generated content securely with path-based ownership."
+    "reasoning": "This Firestore structure prioritizes security and scalability for the EdTech platform, focusing on authorization independence and clear access patterns. It leverages path-based ownership for user-specific data and membership maps for collaborative data access, eliminating the need for `get()` calls in security rules and ensuring atomic operations.\n\nThe core principle is **Authorization Independence**. For the `/artifacts/{appId}/public/data/digital_purchases` collection, even though the data is 'public', security is maintained because each document contains the `userId`. Rules are structured to ensure only the authenticated user can create a purchase request for themselves. The `appId` parameter in the path allows for segregation and management of data within specific application contexts, which is useful for multi-tenant environments or different versions of the EdTech platform.\n\n**QAPs (Rules are not Filters):**\n*   The structure supports secure `list` operations by segregating data into collections with homogeneous security postures. For example, purchase requests are stored in a dedicated collection `/artifacts/{appId}/public/data/digital_purchases`, where access is controlled based on the `userId` within each document, allowing for listing purchases securely.\n\n**Denormalization**: The `userId` is denormalized into the `/artifacts/{appId}/public/data/digital_purchases` collection, where access control can depend directly on the attributes stored in the document. A new `/instructors/{instructorId}/reviews/{reviewId}` path is added for storing student reviews. This is publicly readable but writing is restricted to authenticated users to prevent spam. A new collection for `instructors` has been added to support the admin dashboard functionality, with rules initially allowing any signed-in user to manage them for ease of prototyping.\n\nA new `community_messages` collection is added for the public chat feature. Security rules are configured to allow any authenticated user to read from and write to this collection, fostering an open communication environment for students. Updates and deletes are disallowed to maintain the integrity of the chat history. A new path for `comic_performances` is added under `/artifacts/{appId}/users/{userId}` to store user-generated content securely with path-based ownership. New publicly readable collections for `books` and `hadiths` have been added to support the Quran Oasis section."
   }
 }

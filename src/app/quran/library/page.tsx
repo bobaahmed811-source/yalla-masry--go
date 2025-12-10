@@ -1,23 +1,23 @@
-
 'use client';
 
 import React from 'react';
 import Link from 'next/link';
-import { ArrowRight, Library } from 'lucide-react';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
+import { ArrowRight, Library, Loader2 } from 'lucide-react';
 
-// Mock data for books
-const mockBooks = [
-  { id: 1, title: 'صحيح البخاري', author: 'الإمام البخاري', description: 'أصح الكتب بعد القرآن الكريم، يضم الأحاديث النبوية الصحيحة.', category: 'الحديث الشريف', cover: 'https://picsum.photos/seed/bukhari/300/400' },
-  { id: 2, title: 'تفسير ابن كثير', author: 'ابن كثير الدمشقي', description: 'من أشهر كتب تفسير القرآن الكريم بالمأثور.', category: 'التفسير', cover: 'https://picsum.photos/seed/ibn-kathir/300/400' },
-  { id: 3, title: 'الرحيق المختوم', author: 'صفي الرحمن المباركفوري', description: 'بحث في السيرة النبوية على صاحبها أفضل الصلاة والسلام.', category: 'السيرة النبوية', cover: 'https://picsum.photos/seed/raheeq/300/400' },
-  { id: 4, title: 'رياض الصالحين', author: 'الإمام النووي', description: 'مجموعة من الأحاديث النبوية مقسمة حسب الأبواب.', category: 'الحديث الشريف', cover: 'https://picsum.photos/seed/riyadh/300/400' },
-  { id: 5, title: 'بداية المجتهد ونهاية المقتصد', author: 'ابن رشد', description: 'كتاب في الفقه المقارن، يعرض آراء المذاهب المختلفة.', category: 'الفقه', cover: 'https://picsum.photos/seed/ibn-rushd/300/400' },
-  { id: 6, title: 'الأربعون النووية', author: 'الإمام النووي', description: 'متن يضم اثنين وأربعين حديثاً نبوياً في مختلف جوانب الدين.', category: 'الحديث الشريف', cover: 'https://picsum.photos/seed/nawawi/300/400' },
-];
+interface Book {
+  id: string;
+  title: string;
+  author: string;
+  description: string;
+  category: string;
+  cover: string;
+}
 
-const BookCard = ({ book }: { book: (typeof mockBooks)[0] }) => (
+const BookCard = ({ book }: { book: Book }) => (
   <div className="dashboard-card rounded-xl overflow-hidden transform transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:border-gold-accent flex flex-col">
-    <img src={book.cover} alt={`غلاف كتاب ${book.title}`} className="w-full h-56 object-cover" />
+    <img src={book.cover || 'https://picsum.photos/seed/default-book/300/400'} alt={`غلاف كتاب ${book.title}`} className="w-full h-56 object-cover" data-ai-hint="book cover" />
     <div className="p-5 flex flex-col flex-grow">
       <p className="text-xs text-sand-ochre font-semibold mb-1">{book.category}</p>
       <h3 className="text-xl font-bold text-white mb-2 truncate royal-title">{book.title}</h3>
@@ -30,6 +30,14 @@ const BookCard = ({ book }: { book: (typeof mockBooks)[0] }) => (
 );
 
 export default function LibraryPage() {
+  const firestore = useFirestore();
+  const booksCollection = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'books');
+  }, [firestore]);
+
+  const { data: books, isLoading, error } = useCollection<Book>(booksCollection);
+
   return (
     <div 
       className="min-h-screen p-4 md:p-8 flex flex-col bg-nile-dark"
@@ -50,12 +58,25 @@ export default function LibraryPage() {
       </header>
 
       <main className="w-full max-w-7xl mx-auto flex-grow">
-        {/* TODO: Add search and filter controls here */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-          {mockBooks.map(book => (
-            <BookCard key={book.id} book={book} />
-          ))}
-        </div>
+        {isLoading && (
+          <div className="flex justify-center items-center h-64">
+            <Loader2 className="w-12 h-12 text-gold-accent animate-spin" />
+            <p className="text-center text-lg text-sand-ochre ml-4">جاري تحميل الكتب...</p>
+          </div>
+        )}
+        {error && <p className="text-center text-lg text-red-400">حدث خطأ أثناء تحميل الكتب: {error.message}</p>}
+        
+        {books && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+            {books.map(book => (
+              <BookCard key={book.id} book={book} />
+            ))}
+          </div>
+        )}
+        
+        {!isLoading && books?.length === 0 && (
+            <p className="text-center text-sand-ochre py-10">لا توجد كتب في المكتبة حالياً.</p>
+        )}
       </main>
 
       <footer className="mt-auto pt-12 text-center text-gray-400 text-sm">

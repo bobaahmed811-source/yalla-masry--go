@@ -1,40 +1,57 @@
-
 'use client';
 
 import React from 'react';
 import Link from 'next/link';
-import { ArrowRight, GraduationCap } from 'lucide-react';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, query, where } from 'firebase/firestore';
+import { ArrowRight, GraduationCap, Loader2 } from 'lucide-react';
 
-// Mock data for teachers
-const mockTeachers = [
-  { id: 1, name: 'الشيخ أيمن سويد', specialty: 'أحكام التجويد والقراءات العشر', photo: 'https://picsum.photos/seed/ayman-swid/200/200', available: true, rate: 45 },
-  { id: 2, name: 'الأستاذة فاطمة علي', specialty: 'تحفيظ وتثبيت القرآن الكريم للسيدات', photo: 'https://picsum.photos/seed/fatima-ali/200/200', available: true, rate: 40 },
-  { id: 3, name: 'الشيخ محمد العريفي', specialty: 'تفسير وتدبر آيات القرآن الكريم', photo: 'https://picsum.photos/seed/al-arifi/200/200', available: false, rate: 50 },
-  { id: 4, name: 'الأستاذ أحمد السيد', specialty: 'تصحيح التلاوة للمبتدئين والأطفال', photo: 'https://picsum.photos/seed/ahmed-sayed/200/200', available: true, rate: 35 },
-];
+interface Instructor {
+  id: string;
+  teacherName: string;
+  specialty?: string;
+  photo?: string;
+  status?: 'Active' | 'Inactive';
+  lessonPrice?: number;
+  isQuranTeacher?: boolean; // Hypothetical field to filter Quran teachers
+}
 
-const TeacherCard = ({ teacher }: { teacher: (typeof mockTeachers)[0] }) => (
+const TeacherCard = ({ teacher }: { teacher: Instructor }) => (
   <div className="dashboard-card text-white p-6 rounded-2xl shadow-lg text-center transform transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:border-gold-accent flex flex-col">
     <div className="relative w-32 h-32 mx-auto mb-4">
-      <img src={teacher.photo} alt={`صورة ${teacher.name}`} className="rounded-full w-full h-full object-cover border-4 border-gold-accent" />
+      <img src={teacher.photo || `https://picsum.photos/seed/${teacher.id}/200/200`} alt={`صورة ${teacher.teacherName}`} className="rounded-full w-full h-full object-cover border-4 border-gold-accent" />
       <span 
-        className={`absolute bottom-1 right-1 block h-5 w-5 rounded-full border-2 border-nile-dark ${teacher.available ? 'bg-green-400' : 'bg-gray-500'}`}
-        title={teacher.available ? 'متاح' : 'غير متاح'}
+        className={`absolute bottom-1 right-1 block h-5 w-5 rounded-full border-2 border-nile-dark ${teacher.status === 'Active' ? 'bg-green-400' : 'bg-gray-500'}`}
+        title={teacher.status === 'Active' ? 'متاح' : 'غير متاح'}
       ></span>
     </div>
-    <h3 className="text-xl font-bold royal-title mb-1">{teacher.name}</h3>
-    <p className="text-sm text-sand-ochre mb-3 flex-grow">{teacher.specialty}</p>
-    <div className="text-lg font-bold text-white mb-4 bg-nile-dark/30 py-1 px-3 rounded-full self-center">${teacher.rate} / ساعة</div>
+    <h3 className="text-xl font-bold royal-title mb-1">{teacher.teacherName}</h3>
+    <p className="text-sm text-sand-ochre mb-3 flex-grow">{teacher.specialty || 'معلم قرآن كريم'}</p>
+    {teacher.lessonPrice && (
+      <div className="text-lg font-bold text-white mb-4 bg-nile-dark/30 py-1 px-3 rounded-full self-center">${teacher.lessonPrice} / ساعة</div>
+    )}
     <button
-      disabled={!teacher.available}
+      disabled={teacher.status !== 'Active'}
       className="w-full mt-auto cta-button"
     >
-      {teacher.available ? 'احجز الآن' : 'غير متاح'}
+      {teacher.status === 'Active' ? 'احجز الآن' : 'غير متاح'}
     </button>
   </div>
 );
 
 export default function TeachersPage() {
+  const firestore = useFirestore();
+  
+  // In a real app, you might have a dedicated field like `isQuranTeacher: true`
+  // For now, we fetch all instructors and could filter on the client, or assume all are Quran teachers for this page.
+  const instructorsCollection = useMemoFirebase(() => {
+    if (!firestore) return null;
+    // This query would ideally filter for Quran teachers, e.g., where('tags', 'array-contains', 'quran')
+    return collection(firestore, 'instructors'); 
+  }, [firestore]);
+
+  const { data: teachers, isLoading, error } = useCollection<Instructor>(instructorsCollection);
+
   return (
     <div 
       className="min-h-screen p-4 md:p-8 flex flex-col bg-nile-dark"
@@ -55,11 +72,25 @@ export default function TeachersPage() {
       </header>
 
       <main className="w-full max-w-6xl mx-auto flex-grow">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {mockTeachers.map(teacher => (
-            <TeacherCard key={teacher.id} teacher={teacher} />
-          ))}
-        </div>
+        {isLoading && (
+          <div className="flex justify-center items-center h-64">
+            <Loader2 className="w-12 h-12 text-gold-accent animate-spin" />
+            <p className="text-center text-lg text-sand-ochre ml-4">جاري تحميل قائمة المعلمين...</p>
+          </div>
+        )}
+        {error && <p className="text-center text-lg text-red-400">حدث خطأ أثناء تحميل المعلمين: {error.message}</p>}
+        
+        {teachers && (
+           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {teachers.map(teacher => (
+              <TeacherCard key={teacher.id} teacher={teacher} />
+            ))}
+          </div>
+        )}
+
+        {!isLoading && teachers?.length === 0 && (
+            <p className="text-center text-sand-ochre py-10">لا يوجد معلمون مسجلون حالياً.</p>
+        )}
       </main>
 
       <footer className="mt-auto pt-12 text-center text-gray-400 text-sm">

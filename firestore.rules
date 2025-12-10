@@ -105,7 +105,7 @@ service cloud.firestore {
     }
 
     // --------------------------------
-    // Public Content (Courses, Instructors)
+    // Public Content (Courses, Instructors, Quran Oasis)
     // --------------------------------
 
     /**
@@ -167,6 +167,28 @@ service cloud.firestore {
       allow get, list: if true;
       allow create: if isSignedIn() && request.resource.data.studentId == request.auth.uid;
       allow update, delete: if false;
+    }
+    
+    /**
+     * @description Islamic books in the digital library.
+     * @path /books/{bookId}
+     * @allow (read) Anyone can read the list of books.
+     * @deny (write) All write operations are denied for now.
+     */
+    match /books/{bookId} {
+        allow get, list: if true;
+        allow write: if false; // TODO: Restrict writes to admins
+    }
+
+    /**
+     * @description Hadiths in the Sunnah section.
+     * @path /hadiths/{hadithId}
+     * @allow (read) Anyone can read the Hadiths.
+     * @deny (write) All write operations are denied for now.
+     */
+    match /hadiths/{hadithId} {
+        allow get, list: if true;
+        allow write: if false; // TODO: Restrict writes to admins
     }
 
 

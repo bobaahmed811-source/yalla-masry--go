@@ -1,20 +1,19 @@
-
 'use client';
 
 import React from 'react';
 import Link from 'next/link';
-import { ArrowRight, BookOpen } from 'lucide-react';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
+import { ArrowRight, BookOpen, Loader2 } from 'lucide-react';
 
-// Mock data for Hadith
-const mockHadiths = [
-  { id: 1, text: "إِنَّمَا الأَعْمَالُ بِالنِّيَّاتِ، وَإِنَّمَا لِكُلِّ امْرِئٍ مَا نَوَى...", source: 'صحيح البخاري', topic: 'الإخلاص' },
-  { id: 2, text: "مَنْ سَلَكَ طَرِيقًا يَلْتَمِسُ فِيهِ عِلْمًا سَهَّلَ اللَّهُ لَهُ بِهِ طَرِيقًا إِلَى الْجَنَّةِ.", source: 'سنن الترمذي', topic: 'فضل العلم' },
-  { id: 3, text: "لا يُؤْمِنُ أَحَدُكُمْ حَتَّى يُحِبَّ لأَخِيهِ مَا يُحِبُّ لِنَفْسِهِ.", source: 'صحيح مسلم', topic: 'حقوق المسلم' },
-  { id: 4, text: "الْكَلِمَةُ الطَّيِّبَةُ صَدَقَةٌ.", source: 'صحيح البخاري', topic: 'الأخلاق' },
-  { id: 5, text: "خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ.", source: 'صحيح البخاري', topic: 'فضل القرآن' },
-];
+interface Hadith {
+  id: string;
+  text: string;
+  source: string;
+  topic: string;
+}
 
-const HadithCard = ({ hadith }: { hadith: (typeof mockHadiths)[0] }) => (
+const HadithCard = ({ hadith }: { hadith: Hadith }) => (
   <div className="dashboard-card text-white rounded-xl shadow-lg p-6 border-l-4 border-gold-accent transform transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
     <p className="text-lg md:text-xl font-serif mb-4 leading-relaxed text-sand-ochre">"{hadith.text}"</p>
     <div className="flex justify-between items-center border-t border-sand-ochre/20 pt-4">
@@ -25,6 +24,14 @@ const HadithCard = ({ hadith }: { hadith: (typeof mockHadiths)[0] }) => (
 );
 
 export default function SunnahPage() {
+  const firestore = useFirestore();
+  const hadithsCollection = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'hadiths');
+  }, [firestore]);
+
+  const { data: hadiths, isLoading, error } = useCollection<Hadith>(hadithsCollection);
+
   return (
     <div 
       className="min-h-screen p-4 md:p-8 flex flex-col bg-nile-dark"
@@ -45,11 +52,25 @@ export default function SunnahPage() {
       </header>
 
       <main className="w-full max-w-4xl mx-auto flex-grow">
-        <div className="space-y-6">
-          {mockHadiths.map(hadith => (
-            <HadithCard key={hadith.id} hadith={hadith} />
-          ))}
-        </div>
+        {isLoading && (
+          <div className="flex justify-center items-center h-64">
+            <Loader2 className="w-12 h-12 text-gold-accent animate-spin" />
+            <p className="text-center text-lg text-sand-ochre ml-4">جاري تحميل الأحاديث...</p>
+          </div>
+        )}
+        {error && <p className="text-center text-lg text-red-400">حدث خطأ أثناء تحميل الأحاديث: {error.message}</p>}
+        
+        {hadiths && (
+          <div className="space-y-6">
+            {hadiths.map(hadith => (
+              <HadithCard key={hadith.id} hadith={hadith} />
+            ))}
+          </div>
+        )}
+        
+        {!isLoading && hadiths?.length === 0 && (
+            <p className="text-center text-sand-ochre py-10">لا توجد أحاديث في الروضة حالياً.</p>
+        )}
       </main>
 
        <footer className="mt-auto pt-12 text-center text-gray-400 text-sm">
