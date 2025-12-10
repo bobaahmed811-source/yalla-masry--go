@@ -26,6 +26,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Sparkles, User, GraduationCap } from 'lucide-react';
 import Link from 'next/link';
+import { getTutorResponse } from '../actions';
 
 const formSchema = z.object({
   courseMaterial: z.string().min(10, {
@@ -60,19 +61,23 @@ export default function TutorPage() {
     const userMessage: ChatMessage = { type: 'user', text: values.question };
     setChatHistory(prev => [...prev, userMessage]);
 
-    // Mocking AI response as Genkit is removed
-    setTimeout(() => {
-        const tutorMessage: ChatMessage = { type: 'tutor', text: "عفواً، خدمة المعلم الذكي معطلة مؤقتاً. يرجى المحاولة مرة أخرى لاحقاً." };
-        setChatHistory(prev => [...prev, tutorMessage]);
-        toast({
-            variant: 'destructive',
-            title: '❌ الميزة معطلة',
-            description:
-            'فشل الحصول على إجابة. خدمة المعلم الذكي معطلة مؤقتاً.',
-        });
-        setIsLoading(false);
-    }, 1000);
+    // As Genkit is removed, we get a predictable error response.
+    const result = await getTutorResponse(values);
     
+    // We create the tutor message based on the error.
+    const tutorMessage: ChatMessage = { 
+        type: 'tutor', 
+        text: result.error || "عفواً، خدمة المعلم الذكي معطلة مؤقتاً." 
+    };
+    setChatHistory(prev => [...prev, tutorMessage]);
+    
+    toast({
+        variant: 'destructive',
+        title: '❌ الميزة معطلة',
+        description: result.error || 'فشل الحصول على إجابة.',
+    });
+    
+    setIsLoading(false);
     form.resetField('question');
   }
 
