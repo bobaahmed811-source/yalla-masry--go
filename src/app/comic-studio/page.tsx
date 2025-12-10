@@ -25,6 +25,7 @@ import Link from 'next/link';
 import { useUser, useFirestore } from '@/firebase';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { collection } from 'firebase/firestore';
+import { getComicDialog } from './actions';
 
 type StatusType = 'info' | 'loading' | 'success' | 'error';
 
@@ -59,10 +60,10 @@ const StatusDisplay = ({
 
 export default function ComicStudioPage() {
   const [scene, setScene] = useState('family');
-  const [dialogue, setDialogue] = useState<string[]>(['ميزة توليد الحوار معطلة مؤقتاً.', 'يرجى المحاولة مرة أخرى لاحقاً.', '...']);
+  const [dialogue, setDialogue] = useState<string[]>(['مرحباً!', 'كيف حالك اليوم؟', 'أنا بخير، شكراً لك!']);
   const [status, setStatus] = useState<{ type: StatusType; message: string }>({
-    type: 'error',
-    message: 'الميزة معطلة مؤقتاً.',
+    type: 'info',
+    message: 'جاهز لتوليد الحوار.',
   });
   const [isGenerating, setIsGenerating] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
@@ -85,11 +86,23 @@ export default function ComicStudioPage() {
   }, [audioUrl]);
 
   const handleGenerateDialog = async () => {
-    toast({
+    setIsGenerating(true);
+    setStatus({ type: 'loading', message: 'الذكاء الاصطناعي يكتب الحوار...' });
+    const result = await getComicDialog({ scene });
+
+    if (result.success && result.dialogue) {
+      setDialogue(result.dialogue);
+      setStatus({ type: 'success', message: 'تم توليد الحوار بنجاح!' });
+    } else {
+      setDialogue(['حدث خطأ ما.', 'لا يمكن توليد الحوار.', 'يرجى المحاولة مرة أخرى.']);
+      setStatus({ type: 'error', message: result.error || 'فشل توليد الحوار.' });
+      toast({
         variant: 'destructive',
-        title: 'الميزة معطلة',
-        description: 'ميزة توليد الحوار بالذكاء الاصطناعي معطلة مؤقتاً بسبب مشاكل فنية.',
-    });
+        title: 'خطأ في توليد الحوار',
+        description: result.error || 'حدث خطأ غير متوقع.',
+      });
+    }
+    setIsGenerating(false);
   };
 
   const startRecording = async () => {
@@ -222,9 +235,9 @@ export default function ComicStudioPage() {
                         </Select>
                     </div>
 
-                    <Button onClick={handleGenerateDialog} disabled={true} className="comic-btn-primary">
+                    <Button onClick={handleGenerateDialog} disabled={isGenerating} className="comic-btn-primary">
                         <WandSparkles className="ml-2 h-4 w-4" />
-                        توليد حوار العامية (معطل)
+                        {isGenerating ? 'جاري التوليد...' : 'توليد حوار العامية'}
                     </Button>
                     
                     <StatusDisplay type={status.type} message={status.message} />
