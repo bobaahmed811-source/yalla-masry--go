@@ -84,8 +84,6 @@ export default function HomePage() {
           title: "تم تسجيل الخروج",
           description: "نراك قريباً في رحلة أخرى في مملكة مصر القديمة!",
         });
-        // The onAuthStateChanged listener in the provider will handle the redirect/UI update
-        // but we can force a reroute if needed.
         router.push('/landing');
       });
     }
@@ -99,12 +97,10 @@ export default function HomePage() {
     );
   }
 
-  // If user is not logged in, show the landing page
   if (!user) {
     return <LandingPage />;
   }
   
-  // If user is logged in, show the royal dashboard
   return (
     <div className="antialiased min-h-screen bg-nile-dark p-6 md:p-12" style={{direction: 'rtl'}}>
        <div className="fixed top-4 left-4 z-50">
@@ -150,74 +146,106 @@ export default function HomePage() {
                 </button>
             </div>
             
-             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
+            {/* Main Learning Path Section */}
+            <div className="mb-12">
+                <h2 className="text-3xl royal-title text-center mb-4">الرحلة الأساسية</h2>
                 <Link href="/learning-path" className="col-span-full utility-button px-6 py-4 text-2xl font-black rounded-full flex items-center justify-center border-green-400 text-green-400 hover:bg-green-900/50">
                     <i className="fas fa-map-signs text-2xl ml-3"></i>
                     <span>ابدأ من هنا: مسار التعلم الملكي</span>
                 </Link>
-                <Link href="#" className="col-span-full utility-button px-6 py-4 text-2xl font-black rounded-full flex items-center justify-center border-blue-400 text-blue-400 hover:bg-blue-900/50">
-                    <i className="fas fa-gem text-2xl ml-3"></i>
-                    <span>الديوان الخليجي (قريباً)</span>
-                </Link>
-                <Link href="/admin" className="utility-button px-6 py-3 text-lg font-bold rounded-full flex items-center justify-center border-red-400 text-red-400">
-                    <i className="fas fa-crown text-xl ml-3"></i>
-                    <span>ديوان الإدارة</span>
-                </Link>
-                <Link href="/instructors" className="utility-button px-6 py-3 text-lg font-bold rounded-full flex items-center justify-center border-blue-400 text-blue-400">
-                    <i className="fas fa-chalkboard-teacher text-xl ml-3"></i>
-                    <span>مقابلة المعلمين</span>
-                </Link>
-                <Link href="/booking" className="utility-button px-6 py-3 text-lg font-bold rounded-full flex items-center justify-center border-teal-400 text-teal-400">
-                    <i className="fas fa-calendar-check text-xl ml-3"></i>
-                    <span>حجز الدروس الملكية</span>
-                </Link>
-                <Link href="/comic-studio" className="utility-button px-6 py-3 text-lg font-bold rounded-full flex items-center justify-center border-amber-400 text-amber-400">
-                    <i className="fas fa-paint-brush text-xl ml-3"></i>
-                    <span>استوديو القصص المصورة</span>
-                </Link>
-                 <Link href="/museum" className="utility-button px-6 py-3 text-lg font-bold rounded-full flex items-center justify-center border-cyan-400 text-cyan-400">
-                    <i className="fas fa-landmark text-xl ml-3"></i>
-                    <span>المتحف الافتراضي</span>
-                </Link>
-                <Link href="/store" className="utility-button px-6 py-3 text-lg font-bold rounded-full flex items-center justify-center border-emerald-400 text-emerald-400">
-                    <i className="fas fa-store text-xl ml-3"></i>
-                    <span>متجر البرديات</span>
-                </Link>
-                <Link href="/tutor" className="utility-button px-6 py-3 text-lg font-bold rounded-full flex items-center justify-center border-rose-400 text-rose-400">
-                    <i className="fas fa-user-graduate text-xl ml-3"></i>
-                    <span>المعلم الخصوصي</span>
-                </Link>
-                <Link href="/word-scramble" className="utility-button px-6 py-3 text-lg font-bold rounded-full flex items-center justify-center border-indigo-400 text-indigo-400">
-                    <i className="fas fa-random text-xl ml-3"></i>
-                    <span>تحدي الكلمات</span>
-                </Link>
-                 <Link href="/dialogue-challenge" className="utility-button px-6 py-3 text-lg font-bold rounded-full flex items-center justify-center border-purple-400 text-purple-400">
-                    <i className="fas fa-comments text-xl ml-3"></i>
-                    <span>تحدي الحوار</span>
-                </Link>
-                 <Link href="/pronunciation-challenge" className="utility-button px-6 py-3 text-lg font-bold rounded-full flex items-center justify-center border-pink-400 text-pink-400">
-                    <i className="fas fa-bullhorn text-xl ml-3"></i>
-                    <span>تحدي النطق</span>
-                </Link>
-                <Link href="/community-chat" className="utility-button px-6 py-3 text-lg font-bold rounded-full flex items-center justify-center border-lime-400 text-lime-400">
-                    <i className="fas fa-users text-xl ml-3"></i>
-                    <span>ساحة الحوار المجتمعي</span>
-                </Link>
-                 <Link href="/quran" className="utility-button px-6 py-3 text-lg font-bold rounded-full flex items-center justify-center border-sky-300 text-sky-300">
-                    <i className="fas fa-quran text-xl ml-3"></i>
-                    <span>واحة القرآن والسنة</span>
-                </Link>
-                <Link href="/audio-library" className="utility-button px-6 py-3 text-lg font-bold rounded-full flex items-center justify-center border-orange-300 text-orange-300">
-                    <i className="fas fa-volume-up text-xl ml-3"></i>
-                    <span>خزانة الأصوات</span>
-                </Link>
-                <Link href="/placement-test" className="utility-button px-6 py-3 text-lg font-bold rounded-full flex items-center justify-center border-orange-400 text-orange-400 col-span-1 sm:col-span-2 md:col-span-3 lg:col-span-4">
-                    <i className="fas fa-tasks text-xl ml-3"></i>
-                    <span>إعادة اختبار تحديد المستوى</span>
-                </Link>
             </div>
 
-            <div className="dashboard-card p-6 md:p-10 rounded-2xl">
+            {/* Specialization Sections */}
+            <div className="space-y-12">
+                
+                {/* Business and Travel Section */}
+                <div>
+                    <h2 className="text-3xl royal-title text-center mb-4">ديوان الأعمال والسفر</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        <Link href="/dialogue-challenge" className="utility-button px-6 py-3 text-lg font-bold rounded-full flex items-center justify-center border-purple-400 text-purple-400">
+                            <i className="fas fa-comments text-xl ml-3"></i>
+                            <span>تحدي حوار السوق</span>
+                        </Link>
+                        <Link href="/booking" className="utility-button px-6 py-3 text-lg font-bold rounded-full flex items-center justify-center border-teal-400 text-teal-400">
+                            <i className="fas fa-calendar-check text-xl ml-3"></i>
+                            <span>حجز الدروس الملكية</span>
+                        </Link>
+                         <Link href="/tutor" className="utility-button px-6 py-3 text-lg font-bold rounded-full flex items-center justify-center border-rose-400 text-rose-400">
+                            <i className="fas fa-user-graduate text-xl ml-3"></i>
+                            <span>المعلم الخصوصي الذكي</span>
+                        </Link>
+                    </div>
+                </div>
+
+                {/* Culture and Arts Section */}
+                <div>
+                    <h2 className="text-3xl royal-title text-center mb-4">قاعة الثقافة والفنون</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        <Link href="/museum" className="utility-button px-6 py-3 text-lg font-bold rounded-full flex items-center justify-center border-cyan-400 text-cyan-400">
+                            <i className="fas fa-landmark text-xl ml-3"></i>
+                            <span>المتحف الافتراضي</span>
+                        </Link>
+                        <Link href="/comic-studio" className="utility-button px-6 py-3 text-lg font-bold rounded-full flex items-center justify-center border-amber-400 text-amber-400">
+                            <i className="fas fa-paint-brush text-xl ml-3"></i>
+                            <span>استوديو القصص المصورة</span>
+                        </Link>
+                        <Link href="/audio-library" className="utility-button px-6 py-3 text-lg font-bold rounded-full flex items-center justify-center border-orange-300 text-orange-300">
+                            <i className="fas fa-volume-up text-xl ml-3"></i>
+                            <span>خزانة الأصوات</span>
+                        </Link>
+                    </div>
+                </div>
+
+                {/* Royal Kitchen Section */}
+                <div>
+                    <h2 className="text-3xl royal-title text-center mb-4">المطبخ الملكي</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        <Link href="#" className="utility-button px-6 py-3 text-lg font-bold rounded-full flex items-center justify-center border-red-400 text-red-400">
+                            <i className="fas fa-utensils text-xl ml-3"></i>
+                            <span>وصفات فرعونية (قريباً)</span>
+                        </Link>
+                        <Link href="/word-scramble" className="utility-button px-6 py-3 text-lg font-bold rounded-full flex items-center justify-center border-indigo-400 text-indigo-400">
+                            <i className="fas fa-random text-xl ml-3"></i>
+                            <span>تحدي خلط الكلمات</span>
+                        </Link>
+                         <Link href="/pronunciation-challenge" className="utility-button px-6 py-3 text-lg font-bold rounded-full flex items-center justify-center border-pink-400 text-pink-400">
+                            <i className="fas fa-bullhorn text-xl ml-3"></i>
+                            <span>تحدي النطق الصحيح</span>
+                        </Link>
+                    </div>
+                </div>
+
+                {/* Social and Community Section */}
+                <div>
+                    <h2 className="text-3xl royal-title text-center mb-4">الديوان الاجتماعي</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        <Link href="/community-chat" className="utility-button px-6 py-3 text-lg font-bold rounded-full flex items-center justify-center border-lime-400 text-lime-400">
+                            <i className="fas fa-users text-xl ml-3"></i>
+                            <span>ساحة الحوار المجتمعي</span>
+                        </Link>
+                         <Link href="/instructors" className="utility-button px-6 py-3 text-lg font-bold rounded-full flex items-center justify-center border-blue-400 text-blue-400">
+                            <i className="fas fa-chalkboard-teacher text-xl ml-3"></i>
+                            <span>مقابلة المعلمين</span>
+                        </Link>
+                    </div>
+                </div>
+                 {/* Special Future Sections */}
+                 <div className="mt-12">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <Link href="#" className="col-span-1 utility-button px-6 py-4 text-xl font-black rounded-full flex items-center justify-center border-blue-400 text-blue-400 hover:bg-blue-900/50">
+                            <i className="fas fa-gem text-xl ml-3"></i>
+                            <span>الديوان الخليجي (قريباً)</span>
+                        </Link>
+                        <Link href="/quran" className="utility-button px-6 py-4 text-xl font-bold rounded-full flex items-center justify-center border-sky-300 text-sky-300 col-span-1">
+                            <i className="fas fa-quran text-xl ml-3"></i>
+                            <span>واحة القرآن والسنة</span>
+                        </Link>
+                    </div>
+                </div>
+
+            </div>
+
+             <div className="dashboard-card p-6 md:p-10 rounded-2xl mt-12">
                 <div className="text-2xl royal-title mb-6 text-center">
                     إحصائيات التقدم والموارد
                 </div>
