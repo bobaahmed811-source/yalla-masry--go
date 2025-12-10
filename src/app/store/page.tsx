@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -6,7 +5,7 @@ import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebas
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { collection, query, where } from 'firebase/firestore';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Gift, PiggyBank, ShoppingCart, History, ArrowLeft, Loader2 } from 'lucide-react';
+import { Gift, PiggyBank, ShoppingCart, History, ArrowLeft, Loader2, Ankh, ScrollText } from 'lucide-react';
 import Link from 'next/link';
 
 // Define the structure for a payment message
@@ -30,11 +29,11 @@ interface Purchase {
 export default function StorePage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
-  const [showProducts, setShowProducts] = useState(false);
   const [paymentMessage, setPaymentMessage] = useState<PaymentMessage | null>(null);
   const [nilePoints, setNilePoints] = useState(1250); // Mock points
   const [giftEmail, setGiftEmail] = useState('');
-  const [giftProduct, setGiftProduct] = useState('mammoth_scroll');
+  const [giftProduct, setGiftProduct] = useState('wisdom_papyrus');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const appId = 'yalla-masry-academy'; // This ID would typically come from your environment configuration
 
@@ -48,35 +47,26 @@ export default function StorePage() {
 
   const { data: purchases, isLoading: isLoadingPurchases } = useCollection<Purchase>(userPurchasesQuery);
 
-  useEffect(() => {
-    if (!isUserLoading) {
-      setShowProducts(true);
-    }
-  }, [isUserLoading, user]);
 
   const buyProduct = async (productName: string, price: number, isGift: boolean = false, recipientEmail: string | null = null) => {
-    setPaymentMessage(null); // Clear previous messages
+    setIsSubmitting(true);
+    setPaymentMessage(null);
 
     if (!firestore) {
-      setPaymentMessage({
-        type: 'error',
-        title: 'فشل الاتصال بالنظام.',
-        body: 'خدمة قاعدة البيانات غير متاحة حالياً. يرجى المحاولة لاحقاً.',
-      });
+      setPaymentMessage({ type: 'error', title: 'فشل الاتصال بالنظام.', body: 'خدمة قاعدة البيانات غير متاحة حالياً.' });
+      setIsSubmitting(false);
       return;
     }
     
     if (!user) {
-      setPaymentMessage({
-        type: 'error',
-        title: 'يرجى تسجيل الدخول أولاً!',
-        body: 'لا يمكننا تسجيل طلب الشراء دون معرفة هويتك.',
-      });
+      setPaymentMessage({ type: 'error', title: 'يرجى تسجيل الدخول أولاً!', body: 'لا يمكننا تسجيل طلب الشراء دون معرفة هويتك.' });
+      setIsSubmitting(false);
       return;
     }
 
     if (isGift && (!recipientEmail || !/^\S+@\S+\.\S+$/.test(recipientEmail))) {
         setPaymentMessage({ type: 'error', title: 'خطأ في بيانات الهدية', body: 'الرجاء إدخال بريد إلكتروني صحيح للشخص الذي ستهديه المنتج.' });
+        setIsSubmitting(false);
         return;
     }
 
@@ -92,48 +82,30 @@ export default function StorePage() {
         purchaseData.recipientEmail = recipientEmail;
     }
     
-    const docRefPromise = addDocumentNonBlocking(collection(firestore, purchasesCollectionPath), purchaseData);
-    const docRef = await docRefPromise;
+    try {
+        const docRef = await addDocumentNonBlocking(collection(firestore, purchasesCollectionPath), purchaseData);
 
-    const successMessageBody = isGift 
-      ? `<strong>رقم الطلب: ${docRef.id}</strong><br/><br/>
-         شكراً لك على كرمك! لقد تم تسجيل طلبك لإهداء <strong>"${productName}"</strong> إلى ${recipientEmail}.<br/><br/>
-         سيتم التواصل معك عبر بريدك لإتمام الدفع، وبعدها سنقوم بإرسال الهدية بالنيابة عنك.`
-      : `<strong>رقم الطلب: ${docRef.id}</strong><br/><br/>
-         مرحباً بك في خطوتك الأولى نحو الإتقان! لقد قمنا بتسجيل طلبك لشراء <strong>"${productName}"</strong> وهو الآن قيد المراجعة.<br/><br/>
-         <strong>الخطوة التالية:</strong> لإتمام عملية الشراء، سيقوم فريق الإدارة لدينا بالتواصل معك عبر البريد الإلكتروني المسجل لدينا خلال الساعات القادمة لتزويدك برابط دفع آمن ومباشر.`;
+        const successMessageBody = isGift 
+          ? `<strong>رقم الطلب: ${docRef.id}</strong><br/><br/>
+             شكراً لك على كرمك! لقد تم تسجيل طلبك لإهداء <strong>"${productName}"</strong> إلى ${recipientEmail}.<br/><br/>
+             سيتم التواصل معك عبر بريدك لإتمام الدفع، وبعدها سنقوم بإرسال الهدية بالنيابة عنك.`
+          : `<strong>رقم الطلب: ${docRef.id}</strong><br/><br/>
+             مرحباً بك في خطوتك الأولى نحو الإتقان! لقد قمنا بتسجيل طلبك لشراء <strong>"${productName}"</strong> وهو الآن قيد المراجعة.<br/><br/>
+             <strong>الخطوة التالية:</strong> لإتمام عملية الشراء، سيقوم فريق الإدارة لدينا بالتواصل معك عبر البريد الإلكتروني المسجل لدينا خلال الساعات القادمة لتزويدك برابط دفع آمن ومباشر.`;
 
-    setPaymentMessage({
-        type: 'success',
-        title: '✅ تم استلام طلبك بنجاح!',
-        body: successMessageBody,
-    });
+        setPaymentMessage({
+            type: 'success',
+            title: '✅ تم استلام طلبك بنجاح!',
+            body: successMessageBody,
+        });
 
-    if (isGift) {
-        setGiftEmail('');
+        if (isGift) setGiftEmail('');
+
+    } catch (error) {
+        setPaymentMessage({ type: 'error', title: 'حدث خطأ', body: 'لم نتمكن من تسجيل طلبك. يرجى المحاولة مرة أخرى.' });
+    } finally {
+        setIsSubmitting(false);
     }
-  };
-
-  const redeemWithPoints = (productName: string, pointsCost: number) => {
-    setPaymentMessage(null);
-
-    if (!user) {
-        setPaymentMessage({ type: 'error', title: 'يرجى تسجيل الدخول أولاً!', body: 'يجب أن تكون مسجلاً لاستخدام نقاطك.' });
-        return;
-    }
-
-    if (nilePoints < pointsCost) {
-        setPaymentMessage({ type: 'error', title: 'نقاط النيل غير كافية!', body: `تحتاج إلى ${pointsCost} نقطة وأنت تملك ${nilePoints} نقطة فقط.` });
-        return;
-    }
-
-    setNilePoints(prev => prev - pointsCost);
-    
-    setPaymentMessage({
-        type: 'success',
-        title: '🎉 تم الاستبدال بنجاح!',
-        body: `لقد استخدمت ${pointsCost} نقطة للحصول على "${productName}". تم تحديث رصيدك.`,
-    });
   };
 
   const getStatusChip = (status: Purchase['status']) => {
@@ -146,194 +118,146 @@ export default function StorePage() {
   }
 
   const handleSendGift = () => {
-    const productPrice = giftProduct === 'mammoth_scroll' ? 300 : 500;
-    const productName = giftProduct === 'mammoth_scroll' ? 'برديّة وصفة الماموث' : 'مجموعة تحديات التاكسي المتقدمة';
+    const productPrice = giftProduct === 'wisdom_papyrus' ? 120 : 180;
+    const productName = giftProduct === 'wisdom_papyrus' ? 'بردية حكمة بتاح حتب' : 'مفتاح الحياة الصوتي';
     buyProduct(productName, productPrice, true, giftEmail);
   }
 
   return (
-    <div className="store-body antialiased bg-gray-50 min-h-screen">
-      <header className="bg-white shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center" style={{ direction: 'rtl' }}>
-          <Link href="/store" className="text-3xl font-bold text-[#0b4e8d] royal-title">كنوز النيل</Link>
-          <div className="flex items-center space-x-4 space-x-reverse">
-            <span className="text-sm text-gray-600 font-semibold">متجر برديات العامية والهدايا</span>
-            <Link href="/" className="utility-button px-4 py-2 text-sm font-bold rounded-lg flex items-center justify-center">
-                <ArrowLeft className="ml-2 h-4 w-4" />
-                <span>العودة للوحة التحكم</span>
-            </Link>
-          </div>
-        </div>
+    <div className="min-h-screen bg-nile-dark text-white p-4 md:p-8" style={{ direction: 'rtl' }}>
+      <header className="text-center mb-12">
+        <h1 className="text-5xl md:text-6xl font-black royal-title mb-2">
+          متجر كنوز المملكة
+        </h1>
+        <p className="text-xl text-sand-ochre">
+          برديات حصرية وكنوز فرعونية لتعزيز رحلتك التعليمية.
+        </p>
       </header>
 
-      <main className="py-12 md:py-16">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8" style={{ direction: 'rtl' }}>
-          <h1 className="text-4xl font-extrabold text-center text-gray-800 mb-4">
-            برديات العامية والكنوز الملكية
-          </h1>
-          <p className="text-center text-gray-600 mb-12">
-            منتجات فورية تساعدك على فهم الثقافة المصرية وإهداء أصدقائك.
-          </p>
-          
-          {isUserLoading && (
-            <div className="text-center mb-8">
-              <p className="text-lg font-semibold text-blue-600 flex items-center justify-center gap-2">
-                <Loader2 className="animate-spin" />
-                جاري تأمين الاتصال بالنظام...
-              </p>
+      <main className="max-w-6xl mx-auto">
+         {paymentMessage && (
+            <div className={`p-6 rounded-xl mb-8 shadow-lg transition-all duration-300 ${paymentMessage.type === 'success' ? 'bg-green-800/20 border-green-500' : 'bg-red-800/20 border-red-500'} border`}>
+              <p className={`font-extrabold text-2xl mb-3 ${paymentMessage.type === 'success' ? 'text-green-300' : 'text-red-300'}`}>{paymentMessage.title}</p>
+              <div className={`text-md ${paymentMessage.type === 'success' ? 'text-green-200' : 'text-red-200'} space-y-2`} dangerouslySetInnerHTML={{ __html: paymentMessage.body }}></div>
             </div>
           )}
 
-          {paymentMessage && (
-            <div className={`p-6 rounded-xl text-right mb-8 shadow-lg transition-all duration-300 ${paymentMessage.type === 'success' ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300'}`} role="alert">
-              <p className={`font-extrabold text-2xl mb-3 ${paymentMessage.type === 'success' ? 'text-green-800' : 'text-red-800'}`}>{paymentMessage.title}</p>
-              <div className={`text-md ${paymentMessage.type === 'success' ? 'text-green-900' : 'text-red-900'} space-y-2`} dangerouslySetInnerHTML={{ __html: paymentMessage.body }}></div>
-            </div>
-          )}
-            
-          <Tabs defaultValue="digital_products" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 bg-gray-200 p-2 rounded-xl">
-              <TabsTrigger value="digital_products" className="flex items-center gap-2 font-bold data-[state=active]:bg-nile data-[state=active]:text-white"><ShoppingCart className="w-5 h-5"/> منتجات رقمية</TabsTrigger>
-              <TabsTrigger value="redeem_points" className="flex items-center gap-2 font-bold data-[state=active]:bg-nile data-[state=active]:text-white"><PiggyBank className="w-5 h-5"/> استبدال بالنقاط</TabsTrigger>
-              <TabsTrigger value="gifts" className="flex items-center gap-2 font-bold data-[state=active]:bg-nile data-[state=active]:text-white"><Gift className="w-5 h-5"/> قسم الهدايا</TabsTrigger>
-               <TabsTrigger value="history" className="flex items-center gap-2 font-bold data-[state=active]:bg-nile data-[state=active]:text-white"><History className="w-5 h-5"/> سجل المشتريات</TabsTrigger>
+          <Tabs defaultValue="treasures" className="w-full">
+            <TabsList className="grid w-full grid-cols-3 bg-nile/50 p-2 rounded-xl border border-sand-ochre/30">
+              <TabsTrigger value="treasures" className="tab-trigger"><ShoppingCart className="w-5 h-5 ml-2"/> كنوز المملكة</TabsTrigger>
+              <TabsTrigger value="gifts" className="tab-trigger"><Gift className="w-5 h-5 ml-2"/> إرسال هدية</TabsTrigger>
+              <TabsTrigger value="history" className="tab-trigger"><History className="w-5 h-5 ml-2"/> سجل الطلبات</TabsTrigger>
             </TabsList>
             
-            <TabsContent value="digital_products" className="mt-8">
-                {showProducts ? (
-                    <>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div className="product-card bg-white p-6 rounded-xl border-t-4 border-yellow-500">
-                          <h3 className="text-2xl font-bold text-gray-800 mb-3">1. برديّة وصفة الماموث</h3>
-                          <p className="text-gray-600 mb-4">وثيقة تاريخية ممتعة تشرح طريقة طبخ الطعام المصري عبر العصور القديمة بالعامية.</p>
-                          <div className="flex justify-between items-center mt-6">
-                            <span className="text-3xl font-extrabold text-yellow-600">300 ج.م</span>
-                            <button onClick={() => buyProduct('برديّة وصفة الماموث', 300)} className="buy-button bg-yellow-500 text-white px-6 py-2 rounded-lg font-bold shadow-md transform hover:scale-105 transition duration-200">
-                              شراء البرديّة الآن
-                            </button>
-                          </div>
-                        </div>
-                        
-                        <div className="product-card bg-white p-6 rounded-xl border-t-4 border-purple-500">
-                          <h3 className="text-2xl font-bold text-gray-800 mb-3">2. مجموعة تحديات التاكسي المتقدمة</h3>
-                          <p className="text-gray-600 mb-4">50 حواراً إضافياً بمستويات متقدمة لمواقف حياتية أكثر تعقيداً في الشارع المصري.</p>
-                          <div className="flex justify-between items-center mt-6">
-                            <span className="text-3xl font-extrabold text-purple-600">500 ج.م</span>
-                            <button onClick={() => buyProduct('مجموعة تحديات التاكسي المتقدمة', 500)} className="buy-button bg-purple-500 text-white px-6 py-2 rounded-lg font-bold shadow-md transform hover:scale-105 transition duration-200">
-                              شراء التحديات الآن
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {!user && !isUserLoading && (
-                        <div className="text-center mt-8 p-6 bg-red-100 border border-red-400 text-red-700 rounded-lg">
-                          <strong>يرجى تسجيل الدخول أولاً!</strong> يجب أن تكون مسجلاً لتتمكن من تسجيل طلب الشراء الخاص بك.
-                        </div>
-                      )}
-                    </>
-                ) : null}
-            </TabsContent>
-
-            <TabsContent value="redeem_points" className="mt-8">
-              <div className="text-center mb-6 p-4 bg-blue-100 border border-blue-400 rounded-lg">
-                  <p className="text-lg font-bold text-blue-800">رصيدك الحالي: <span className="text-2xl">{nilePoints}</span> نقطة نيل </p>
-              </div>
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="product-card bg-white p-6 rounded-xl border-t-4 border-green-500">
-                        <h3 className="text-2xl font-bold text-gray-800 mb-3">اسم فرعوني نادر</h3>
-                        <p className="text-gray-600 mb-4">افتح قفل اسم "أخناتون الحكيم" لتستخدمه كاسمك المستعار في المملكة.</p>
-                        <div className="flex justify-between items-center mt-6">
-                        <span className="text-3xl font-extrabold text-green-600">800 نقطة</span>
-                        <button onClick={() => redeemWithPoints('Rare_Alias_Akhenaten', 800)} className="buy-button bg-green-500 text-white px-6 py-2 rounded-lg font-bold shadow-md transform hover:scale-105 transition duration-200">
-                            استبدال بالنقاط
-                        </button>
-                        </div>
+            <TabsContent value="treasures" className="mt-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  
+                  <div className="dashboard-card p-6 rounded-xl flex flex-col text-center items-center">
+                    <ScrollText className="w-20 h-20 text-gold-accent mb-4"/>
+                    <h3 className="text-2xl font-bold royal-title mb-3">بردية حكمة بتاح حتب</h3>
+                    <p className="text-sand-ochre mb-4 flex-grow">نسخة رقمية طبق الأصل من بردية نادرة تحتوي على حكم ومواعظ قديمة لتعميق فهمك الثقافي.</p>
+                    <div className="flex justify-between items-center mt-6 w-full">
+                      <span className="text-4xl font-extrabold text-white">$120</span>
+                      <button onClick={() => buyProduct('بردية حكمة بتاح حتب', 120)} disabled={isSubmitting} className="cta-button">
+                        {isSubmitting ? <Loader2 className="animate-spin"/> : 'اطلب الآن'}
+                      </button>
                     </div>
-                    <div className="product-card bg-white p-6 rounded-xl border-t-4 border-red-500">
-                        <h3 className="text-2xl font-bold text-gray-800 mb-3">تلميح لغز المتحف</h3>
-                        <p className="text-gray-600 mb-4">احصل على مساعدة إضافية لحل أحد ألغاز القطع الأثرية في المتحف الافتراضي.</p>
-                        <div className="flex justify-between items-center mt-6">
-                        <span className="text-3xl font-extrabold text-red-600">250 نقطة</span>
-                        <button onClick={() => redeemWithPoints('Museum_Puzzle_Hint', 250)} className="buy-button bg-red-500 text-white px-6 py-2 rounded-lg font-bold shadow-md transform hover:scale-105 transition duration-200">
-                            استبدال بالنقاط
-                        </button>
-                        </div>
+                  </div>
+                  
+                  <div className="dashboard-card p-6 rounded-xl flex flex-col text-center items-center">
+                     <Ankh className="w-20 h-20 text-gold-accent mb-4"/>
+                    <h3 className="text-2xl font-bold royal-title mb-3">مفتاح الحياة الصوتي</h3>
+                    <p className="text-sand-ochre mb-4 flex-grow">مجموعة صوتية حصرية بجودة استوديو، تحتوي على تأملات وقصص من مصر القديمة لتدريب أذنك على اللغة.</p>
+                    <div className="flex justify-between items-center mt-6 w-full">
+                      <span className="text-4xl font-extrabold text-white">$180</span>
+                      <button onClick={() => buyProduct('مفتاح الحياة الصوتي', 180)} disabled={isSubmitting} className="cta-button">
+                         {isSubmitting ? <Loader2 className="animate-spin"/> : 'اطلب الآن'}
+                      </button>
                     </div>
+                  </div>
                 </div>
             </TabsContent>
             
             <TabsContent value="gifts" className="mt-8">
-                <div className="product-card bg-white p-8 rounded-xl border-t-4 border-pink-500">
-                    <h3 className="text-2xl font-bold text-gray-800 mb-3 text-center">أهدِ العلم لصديق</h3>
-                    <p className="text-gray-600 mb-6 text-center">شارك متعة تعلم العامية المصرية مع أصدقائك. اختر هدية وأرسلها لهم مع رسالة خاصة.</p>
+                <div className="dashboard-card p-8 rounded-xl max-w-2xl mx-auto">
+                    <h3 className="text-2xl font-bold text-center royal-title mb-3">أهدِ العلم لصديق</h3>
+                    <p className="text-sand-ochre mb-6 text-center">شارك متعة تعلم العامية المصرية مع أصدقائك. اختر هدية وأرسلها لهم مع رسالة خاصة.</p>
                     
                     <div className="space-y-4">
                         <div>
-                            <label htmlFor="friend_email" className="font-bold text-gray-700">بريد الصديق الإلكتروني:</label>
-                            <input type="email" id="friend_email" placeholder="friend@example.com" value={giftEmail} onChange={(e) => setGiftEmail(e.target.value)} className="w-full p-2 mt-1 border-2 border-gray-300 rounded-lg focus:ring-pink-500 focus:border-pink-500" />
+                            <label htmlFor="friend_email" className="font-bold text-sand-ochre">بريد الصديق الإلكتروني:</label>
+                            <input type="email" id="friend_email" placeholder="friend@example.com" value={giftEmail} onChange={(e) => setGiftEmail(e.target.value)} className="w-full p-2 mt-1 border-2 bg-nile-dark border-sand-ochre/50 rounded-lg focus:ring-gold-accent focus:border-gold-accent text-white" />
                         </div>
                         <div>
-                            <label htmlFor="gift_product" className="font-bold text-gray-700">اختر الهدية:</label>
-                             <select id="gift_product" value={giftProduct} onChange={(e) => setGiftProduct(e.target.value)} className="w-full p-2 mt-1 border-2 border-gray-300 rounded-lg focus:ring-pink-500 focus:border-pink-500 bg-white">
-                                <option value="mammoth_scroll">برديّة وصفة الماموث (300 ج.م)</option>
-                                <option value="taxi_challenges">مجموعة تحديات التاكسي (500 ج.م)</option>
+                            <label htmlFor="gift_product" className="font-bold text-sand-ochre">اختر الهدية:</label>
+                             <select id="gift_product" value={giftProduct} onChange={(e) => setGiftProduct(e.target.value)} className="w-full p-2 mt-1 border-2 bg-nile-dark border-sand-ochre/50 rounded-lg focus:ring-gold-accent focus:border-gold-accent text-white">
+                                <option value="wisdom_papyrus">بردية حكمة بتاح حتب ($120)</option>
+                                <option value="ankh_audio">مفتاح الحياة الصوتي ($180)</option>
                              </select>
                         </div>
-                        <button onClick={handleSendGift} className="w-full buy-button bg-pink-500 text-white px-6 py-3 rounded-lg font-bold shadow-md transform hover:scale-105 transition duration-200 text-lg">
-                           <Gift className="inline-block ml-2"/> إرسال الهدية
+                        <button onClick={handleSendGift} disabled={isSubmitting} className="w-full cta-button text-lg">
+                           {isSubmitting ? <Loader2 className="animate-spin"/> : <><Gift className="inline-block ml-2"/> إرسال الهدية</>}
                         </button>
                     </div>
                 </div>
             </TabsContent>
 
             <TabsContent value="history" className="mt-8">
-                <div className="product-card bg-white p-8 rounded-xl border-t-4 border-blue-500">
-                    <h3 className="text-2xl font-bold text-gray-800 mb-6 text-center">سجل المشتريات والطلبات</h3>
+                <div className="dashboard-card p-8 rounded-xl">
+                    <h3 className="text-2xl font-bold royal-title mb-6 text-center">سجل الطلبات الملكية</h3>
                     {isLoadingPurchases ? (
-                        <p className="text-center text-gray-500">جاري تحميل سجل طلباتك...</p>
+                        <p className="text-center text-sand-ochre">جاري تحميل سجل طلباتك...</p>
                     ) : purchases && purchases.length > 0 ? (
                         <div className="space-y-4">
                             {purchases.map(p => (
-                                <div key={p.id} className="grid grid-cols-4 gap-4 items-center p-4 border rounded-lg bg-gray-50">
-                                    <div className="col-span-2">
-                                        <p className="font-bold text-gray-900">{p.productId}</p>
-                                        <p className="text-sm text-gray-500">{new Date(p.purchaseDate).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric'})}</p>
-                                         {p.isGift && <p className="text-xs text-pink-600 font-semibold"> (هدية إلى: {p.recipientEmail})</p>}
+                                <div key={p.id} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center p-4 border border-sand-ochre/20 rounded-lg bg-nile/50">
+                                    <div className="md:col-span-2">
+                                        <p className="font-bold text-white">{p.productId}</p>
+                                        <p className="text-sm text-gray-400">{new Date(p.purchaseDate).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric'})}</p>
+                                         {p.isGift && <p className="text-xs text-pink-400 font-semibold"> (هدية إلى: {p.recipientEmail})</p>}
                                     </div>
-                                    <p className="text-lg font-bold text-gray-800 text-center">{p.price} ج.م</p>
+                                    <p className="text-lg font-bold text-white text-center">${p.price}</p>
                                     <div className="text-center">
-                                       <span className={`px-3 py-1 text-sm font-semibold rounded-full ${getStatusChip(p.status)}`}>{p.status}</span>
+                                       <span className={`px-3 py-1 text-sm font-semibold rounded-full ${getStatusChip(p.status)}`}>{p.status === 'Awaiting Payment' ? 'بانتظار الدفع' : p.status}</span>
                                     </div>
                                 </div>
                             ))}
                         </div>
                     ) : (
-                        <p className="text-center text-gray-500">لا يوجد لديك أي طلبات شراء مسجلة حتى الآن.</p>
+                        <p className="text-center text-sand-ochre py-8">لا يوجد لديك أي طلبات شراء مسجلة حتى الآن.</p>
                     )}
                 </div>
             </TabsContent>
-
           </Tabs>
-        </div>
       </main>
 
-      <style jsx>{`
-        .store-body {
-          background-color: #f7fafc;
-          font-family: 'Cairo', sans-serif;
-        }
-        .product-card {
-          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-          transition: all 0.3s ease-in-out;
-        }
-        .product-card:hover {
-          transform: translateY(-5px);
-        }
-        .royal-title {
-          font-family: 'El Messiri', sans-serif;
-        }
-      `}</style>
+      <footer className="mt-12 text-center">
+        <Link href="/" className="utility-button px-6 py-2">
+          <ArrowLeft className="inline-block ml-2"/> العودة للوحة التحكم
+        </Link>
+      </footer>
     </div>
   );
 }
+
+// Add custom styles for better theming
+const style = document.createElement('style');
+style.innerHTML = `
+.tab-trigger {
+  color: var(--sand-ochre);
+  font-weight: bold;
+  border-radius: 0.5rem;
+  transition: all 0.3s;
+}
+.tab-trigger[data-state=active] {
+  background-color: var(--gold-accent);
+  color: var(--nile-dark);
+  box-shadow: 0 4px 14px 0 rgba(255, 215, 0, 0.4);
+}
+.tab-trigger:hover:not([data-state=active]) {
+  background-color: rgba(214, 184, 118, 0.1);
+}
+`;
+document.head.appendChild(style);
+
+    
