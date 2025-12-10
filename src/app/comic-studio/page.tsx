@@ -288,6 +288,10 @@ export default function ComicStudioPage() {
       .comic-btn-primary:hover:not(:disabled) {
         background-color: #1d4ed8;
       }
+      .comic-btn-primary:disabled {
+        background-color: #9ca3af;
+        cursor: not-allowed;
+      }
       .comic-panel {
         background-color: white;
         border: 4px solid black;
