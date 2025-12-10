@@ -60,16 +60,18 @@ export default function StorePage() {
       status: 'Awaiting Payment',
       purchaseDate: new Date().toISOString(),
     };
-
-    // Use the non-blocking Firestore update
-    addDocumentNonBlocking(collection(firestore, purchaseCollectionPath), purchaseData);
     
+    // The non-blocking function returns a promise that resolves with the new DocRef
+    const docRefPromise = addDocumentNonBlocking(collection(firestore, purchaseCollectionPath), purchaseData);
+    const docRef = await docRefPromise; // We need the ID for the message
+
     setPaymentMessage({
-      type: 'success',
-      title: '✅ تم تسجيل طلب الشراء بنجاح!',
-      body: `يرجى دفع مبلغ <strong>${price} ج.م</strong> لإكمال العملية. <br/>
-             <strong>خطوات الدفع:</strong> قم بالتحويل البنكي أو تواصل معنا عبر واتساب الآن لتزويدك برابط دفع آمن. <br/>
-             <span class="font-bold text-blue-600">سنرسل لك المنتج (${productName}) فور تأكيد الدفع يدوياً.</span>`,
+        type: 'success',
+        title: '✅ تم استلام طلبك بنجاح!',
+        body: `<strong>رقم الطلب: ${docRef.id}</strong><br/><br/>
+               مرحباً بك في خطوتك الأولى نحو الإتقان! لقد قمنا بتسجيل طلبك لشراء <strong>"${productName}"</strong> وهو الآن قيد المراجعة.<br/><br/>
+               <strong>الخطوة التالية:</strong> لإتمام عملية الشراء، سيقوم فريق الإدارة لدينا بالتواصل معك عبر البريد الإلكتروني المسجل لدينا خلال الساعات القادمة لتزويدك برابط دفع آمن ومباشر.<br/><br/>
+               <span class="text-sm text-gray-500">نحن نستخدم هذا الإجراء اليدوي في الوقت الحالي لضمان أقصى درجات الأمان والمرونة لك. شكرًا لثقتك في أكاديمية يلا مصري.</span>`,
     });
   };
 
@@ -130,9 +132,9 @@ export default function StorePage() {
           )}
 
           {paymentMessage && (
-            <div className={`p-4 rounded-lg text-right mb-8 ${paymentMessage.type === 'success' ? 'bg-green-100 text-green-800 border border-green-300' : 'bg-red-100 text-red-800 border border-red-300'}`} role="alert">
-              <p className="font-bold text-lg mb-2">{paymentMessage.title}</p>
-              <p className="text-sm" dangerouslySetInnerHTML={{ __html: paymentMessage.body }}></p>
+            <div className={`p-6 rounded-xl text-right mb-8 shadow-lg transition-all duration-300 ${paymentMessage.type === 'success' ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300'}`} role="alert">
+              <p className={`font-extrabold text-2xl mb-3 ${paymentMessage.type === 'success' ? 'text-green-800' : 'text-red-800'}`}>{paymentMessage.title}</p>
+              <div className={`text-md ${paymentMessage.type === 'success' ? 'text-green-900' : 'text-red-900'} space-y-2`} dangerouslySetInnerHTML={{ __html: paymentMessage.body }}></div>
             </div>
           )}
             
