@@ -261,7 +261,7 @@ export default function HomePage() {
                         </Link>
                          <Link href="/instructors" className="utility-button px-6 py-3 text-lg font-bold rounded-full flex items-center justify-center border-blue-400 text-blue-400">
                             <i className="fas fa-chalkboard-teacher text-xl ml-3"></i>
-                            <span>مقابلة المعلمين</span>
+                            <span>مقابلة المعلمات</span>
                         </Link>
                     </div>
                 </div>
