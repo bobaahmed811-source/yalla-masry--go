@@ -165,8 +165,24 @@ service cloud.firestore {
      */
     match /instructors/{instructorId} {
       allow get, list: if true;
-      allow create, update, delete: if false; // TODO: Implement write rules once an admin role system is defined.
+      // Allow an authenticated user who is an instructor to update their own profile
+      allow update: if isSignedIn() && request.auth.uid == instructorId;
+      allow create, delete: if false; // TODO: Implement write rules once an admin role system is defined.
     }
+
+    /**
+     * @description Student reviews for a specific instructor.
+     * @path /instructors/{instructorId}/reviews/{reviewId}
+     * @allow (get, list) Anyone can read reviews.
+     * @allow (create) Any signed-in user can create a review for an instructor.
+     * @deny (update, delete) No one can update or delete reviews to maintain integrity.
+     */
+    match /instructors/{instructorId}/reviews/{reviewId} {
+      allow get, list: if true;
+      allow create: if isSignedIn() && request.resource.data.studentId == request.auth.uid;
+      allow update, delete: if false;
+    }
+
 
     // --------------------------------
     // Collaborative Data (Messages)
