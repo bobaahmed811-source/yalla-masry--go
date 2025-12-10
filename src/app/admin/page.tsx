@@ -1,8 +1,6 @@
 
 'use client';
 
-import React, 'use client';
-
 import { useState } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
@@ -10,6 +8,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { PlusCircle, Edit, Trash2, User } from 'lucide-react';
 import Link from 'next/link';
@@ -79,14 +88,12 @@ const AdminDashboardPage = () => {
 
   const handleDeleteInstructor = async (instructorId: string) => {
     if (!firestore) return;
-    if (window.confirm('هل أنت متأكد من رغبتك في حذف هذا المعلم؟ لا يمكن التراجع عن هذا الإجراء.')) {
-      try {
-        await deleteDoc(doc(firestore, 'instructors', instructorId));
-        toast({ title: 'تم الحذف', description: 'تم حذف المعلم بنجاح.' });
-      } catch (error: any) {
-        console.error("Error deleting instructor:", error);
-        toast({ variant: 'destructive', title: 'خطأ', description: error.message });
-      }
+    try {
+      await deleteDoc(doc(firestore, 'instructors', instructorId));
+      toast({ title: 'تم الحذف', description: 'تم حذف المعلم بنجاح.' });
+    } catch (error: any) {
+      console.error("Error deleting instructor:", error);
+      toast({ variant: 'destructive', title: 'خطأ', description: error.message });
     }
   };
 
@@ -176,9 +183,27 @@ const AdminDashboardPage = () => {
                     <Button variant="ghost" size="icon" onClick={() => openEditDialog(instructor)} className="text-blue-400 hover:text-blue-300">
                       <Edit className="h-5 w-5" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleDeleteInstructor(instructor.id)} className="text-red-500 hover:text-red-400">
-                      <Trash2 className="h-5 w-5" />
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-400">
+                          <Trash2 className="h-5 w-5" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent className="dashboard-card text-white">
+                        <AlertDialogHeader>
+                          <AlertDialogTitle className="royal-title">هل أنت متأكد من قرارك الملكي؟</AlertDialogTitle>
+                          <AlertDialogDescription className="text-sand-ochre">
+                            هذا الإجراء سيقوم بحذف سجل المعلم بشكل نهائي. لا يمكن التراجع عن هذا الأمر.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel className="utility-button">إلغاء</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDeleteInstructor(instructor.id)} className="cta-button bg-red-600 hover:bg-red-700 text-white">
+                            نعم، قم بالحذف
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </div>
               ))}
