@@ -61,7 +61,13 @@ export default function LoginPage() {
                 title: `مرحباً بعودتك يا ${result.user.displayName || 'فرعون'}!`,
                 description: "تم تسجيل دخولك بنجاح."
             });
-            router.push('/');
+            // Check if user is new (has no display name maybe) and redirect to goals
+            // For now, we assume existing users go to dashboard
+            if(!result.user.displayName) {
+                router.push('/goals');
+            } else {
+                router.push('/');
+            }
         } else if (result.error) {
             let description = "البريد الإلكتروني أو كلمة السر غير صحيحة. يرجى المحاولة مرة أخرى.";
             switch(result.error.code) {
@@ -71,6 +77,9 @@ export default function LoginPage() {
                     break;
                 case 'auth/wrong-password':
                     description = "كلمة السر غير صحيحة. يرجى المحاولة مرة أخرى.";
+                    break;
+                 case 'auth/invalid-email':
+                    description = "صيغة البريد الإلكتروني غير صحيحة.";
                     break;
             }
             toast({
@@ -139,6 +148,9 @@ export default function LoginPage() {
             <Link href="/signup" className="underline font-bold">
               انضم إلى المملكة
             </Link>
+          </div>
+           <div className="mt-2 text-center text-xs text-gray-400">
+            مستخدم جديد؟ سيتم توجيهك لاختيار هدفك بعد الإنضمام.
           </div>
         </CardContent>
       </Card>

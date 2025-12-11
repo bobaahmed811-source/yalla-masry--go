@@ -121,6 +121,8 @@ export default function DialogueChallengePage() {
     // This effect now correctly reads nilePoints from the user object provided by the useUser hook.
     if (user && typeof user.nilePoints === 'number') {
       setNilePoints(user.nilePoints);
+    } else if (user) {
+      setNilePoints(0); // Default to 0 if not present
     }
   }, [user]);
 
