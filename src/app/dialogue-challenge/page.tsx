@@ -103,8 +103,7 @@ DialogueBubble.displayName = "DialogueBubble";
 // === Main Component ===
 
 export default function DialogueChallengePage() {
-  const { user, isUserLoading } = useUser();
-  const firestore = useFirestore();
+  const { user, isUserLoading, firestore } = useUser(true);
   const { toast } = useToast();
   
   const [nilePoints, setNilePoints] = useState(0); 
@@ -119,7 +118,8 @@ export default function DialogueChallengePage() {
   const alias = user?.displayName || "الزائر الملكي";
 
   useEffect(() => {
-    if (user && user.nilePoints) {
+    // This effect now correctly reads nilePoints from the user object provided by the useUser hook.
+    if (user && typeof user.nilePoints === 'number') {
       setNilePoints(user.nilePoints);
     }
   }, [user]);
@@ -293,3 +293,5 @@ export default function DialogueChallengePage() {
     </div>
   );
 };
+
+    

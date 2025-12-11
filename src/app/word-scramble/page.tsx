@@ -6,12 +6,11 @@ import { useDrag, useDrop, DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Check, ArrowLeft, Gem } from 'lucide-react';
-import { useUser, useFirestore } from '@/firebase';
+import { Check, ArrowLeft, Gem, Loader2 } from 'lucide-react';
+import { useUser } from '@/firebase';
 import { doc, updateDoc, increment } from 'firebase/firestore';
 
 // === Game Data ===
-const ALIAS = "تحتمس الصغير"; // This will be replaced by user's display name
 const PUZZLES = [
   {
     id: 1,
@@ -50,8 +49,7 @@ const ItemTypes = { WORD: 'word' };
 // GameContent Component (uses DND Hooks)
 // ===================================
 const GameContent = () => {
-  const { user, isUserLoading } = useUser();
-  const firestore = useFirestore();
+  const { user, isUserLoading, firestore } = useUser(true);
   const [currentPuzzleIndex, setCurrentPuzzleIndex] = useState(0);
   const [shuffledWords, setShuffledWords] = useState<string[]>([]);
   const [arrangedWords, setArrangedWords] = useState<string[]>([]);
@@ -59,12 +57,12 @@ const GameContent = () => {
   const [message, setMessage] = useState('');
   const [nilePoints, setNilePoints] = useState(0);
 
-  const alias = user?.displayName || ALIAS;
+  const alias = user?.displayName || 'تحتمس الصغير';
   const currentPuzzle = PUZZLES[currentPuzzleIndex];
   const correctSentence = currentPuzzle?.sentence;
 
   useEffect(() => {
-    if (user && user.nilePoints) {
+    if (user && typeof user.nilePoints === 'number') {
       setNilePoints(user.nilePoints);
     }
   }, [user]);
@@ -158,10 +156,19 @@ const GameContent = () => {
       drop: (item: any) => returnWord(item)
   }));
 
-  if (!currentPuzzle || isUserLoading) {
+  if (isUserLoading) {
     return (
-      <div className="flex items-center justify-center text-white p-10">
+      <div className="flex items-center justify-center text-white p-10 h-full">
+        <Loader2 className="w-8 h-8 animate-spin text-gold-accent mr-3" />
         <p>جاري تحميل تحديات فرعونية جديدة...</p>
+      </div>
+    );
+  }
+
+  if (!currentPuzzle) {
+     return (
+      <div className="flex items-center justify-center text-white p-10 h-full">
+        <p>لا توجد تحديات متاحة حالياً.</p>
       </div>
     );
   }
@@ -273,3 +280,5 @@ const WordScramblePage = () => {
 };
 
 export default WordScramblePage;
+
+    

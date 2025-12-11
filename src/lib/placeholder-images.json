@@ -3,49 +3,49 @@
     {
       "id": "course-thumb-1",
       "description": "Thumbnail for Web Development course",
-      "imageUrl": "https://images.unsplash.com/photo-1523800503107-5bc3ba2a6f81?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxsYXB0b3AlMjBjb2RlfGVufDB8fHx8MTc2NTIxNzE2Mnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxsYXB0b3AlMjBjb2RlfGVufDB8fHx8MTc2NTM0Njk1OHww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "laptop code"
     },
     {
       "id": "instructor-1",
-      "description": "Portrait of a friendly female instructor",
-      "imageUrl": "https://images.unsplash.com/photo-1557053910-d9eadeed1c58?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHx3b21hbiUyMHBvcnRyYWl0fGVufDB8fHx8MTc2NTIzMzE2N3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "description": "Portrait of a friendly female instructor, smiling",
+      "imageUrl": "https://images.unsplash.com/photo-1546961329-78bef0414d7c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHx3b21hbiUyMHBvcnRyYWl0fGVufDB8fHx8MTc2NTMyNTc1NHww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "woman portrait"
     },
     {
       "id": "instructor-2",
-      "description": "Portrait of another female instructor, smiling",
-      "imageUrl": "https://images.unsplash.com/photo-1580489944761-15a19d654956?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHx3b21hbiUyMHBvcnRyYWl0fGVufDB8fHx8MTc2NTIzMzE2N3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "description": "Portrait of another female instructor, professional",
+      "imageUrl": "https://images.unsplash.com/photo-1580489944761-15a19d654956?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxzbWlsaW5nJTIwd29tYW58ZW58MHx8fHwxNzY1MzgwNDgwfDA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "smiling woman"
     },
     {
       "id": "instructor-3",
-      "description": "Portrait of a professional female instructor",
-      "imageUrl": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHx3b21hbiUyMHBvcnRyYWl0fGVufDB8fHx8MTc2NTIzMzE2N3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "description": "Portrait of a professional female instructor with glasses",
+      "imageUrl": "https://images.unsplash.com/photo-1581065178047-8ee15951ede6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxwcm9mZXNzaW9uYWwlMjB3b21hbnxlbnwwfHx8fDE3NjUzOTI4MDB8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "professional woman"
     },
     {
       "id": "book-1",
-      "description": "Cover of an old Islamic book",
-      "imageUrl": "https://images.unsplash.com/photo-1627843519840-a386125e174b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxpc2xhbWljJTIwYm9va3xlbnwwfHx8fDE3MjE4MzQ5ODd8MA&ixlib=rb-4.0.3&q=80&w=1080",
+      "description": "Cover of an old Islamic book with intricate patterns",
+      "imageUrl": "https://images.unsplash.com/photo-1641816514743-d264c1481585?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxpc2xhbWljJTIwYm9va3xlbnwwfHx8fDE3NjUzODQ2Mjh8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "islamic book"
     },
     {
       "id": "book-2",
-      "description": "Cover of a Tafsir book",
-      "imageUrl": "https://images.unsplash.com/photo-1599249082199-81f5e84a2228?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxxdXJhbiUyMGJvb2t8ZW58MHx8fHwxNzIxODM1MDI0fDA&ixlib=rb-4.0.3&q=80&w=1080",
+      "description": "Cover of a Tafsir book, classic design",
+      "imageUrl": "https://images.unsplash.com/photo-1596619333466-296d705c4007?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxxdXJhbiUyMGJvb2t8ZW58MHx8fHwxNzY1NDAxMDY1fDA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "quran book"
     },
     {
       "id": "book-3",
-      "description": "Cover of a Hadith collection",
-      "imageUrl": "https://images.unsplash.com/photo-1600170369210-6ea3638787a2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxpc2xhbWljJTIwYm9va3xlbnwwfHx8fDE3MjE4MzQ5ODd8MA&ixlib=rb-4.0.3&q=80&w=1080",
+      "description": "Cover of a Hadith collection, simple and elegant",
+      "imageUrl": "https://images.unsplash.com/photo-1724415471169-d1c322ed8b58?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxpc2xhbWljJTIwc2NyaXB0dXJlfGVufDB8fHx8MTc2NTQyNDA3OHww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "islamic scripture"
     },
     {
       "id": "user-avatar-1",
-      "description": "Avatar for John Doe",
-      "imageUrl": "https://images.unsplash.com/photo-1624395213043-fa2e123b2656?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxtYW4lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjUyODg5NjZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "description": "Default user avatar, a pharaoh icon",
+      "imageUrl": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxtYW4lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjUzOTM4NTd8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "man portrait"
     }
   ]
