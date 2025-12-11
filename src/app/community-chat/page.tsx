@@ -9,6 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import Link from 'next/link';
 import { Send, MessagesSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 // Define the type for a chat message
 interface CommunityMessage {
@@ -50,25 +51,19 @@ const CommunityChatPage = () => {
     setIsSending(true);
     const userAlias = user.displayName || 'مستخدم مجهول';
 
-    try {
-      // Ensure we are adding the document to the correct collection
-      await addDoc(collection(firestore, 'community_messages'), {
-        text: newMessage,
-        senderId: user.uid,
-        senderAlias: userAlias,
-        timestamp: serverTimestamp(),
-      });
-      setNewMessage('');
-    } catch (error) {
-      console.error("Error sending message:", error);
-      toast({
-        variant: 'destructive',
-        title: 'خطأ في الإرسال',
-        description: 'لم نتمكن من إرسال رسالتك. يرجى المحاولة مرة أخرى.',
-      });
-    } finally {
-      setIsSending(false);
-    }
+    const messageData = {
+      text: newMessage,
+      senderId: user.uid,
+      senderAlias: userAlias,
+      timestamp: serverTimestamp(),
+    };
+
+    // Use the non-blocking update
+    addDocumentNonBlocking(collection(firestore, 'community_messages'), messageData);
+    
+    setNewMessage('');
+    setIsSending(false);
+    // The real-time listener will update the UI, no toast needed for success.
   };
   
   if (isUserLoading) {
@@ -137,3 +132,5 @@ const CommunityChatPage = () => {
     </div>
   );
 };
+
+export default CommunityChatPage;
