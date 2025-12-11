@@ -5,7 +5,7 @@ import React, { useEffect, useRef, useCallback, useState } from 'react';
 import * as THREE from 'three';
 import { ARTIFACT_DATA, type Artifacts } from '@/lib/artifacts';
 import { useToast } from '@/hooks/use-toast';
-import { getSpeechAudio } from '@/app/ai-actions'; // Updated import path
+import { getStorytellerAudio } from '@/app/ai-actions';
 
 
 export default function MuseumPage() {
@@ -27,6 +27,7 @@ export default function MuseumPage() {
         camera: null as THREE.PerspectiveCamera | null,
         scene: null as THREE.Scene | null,
         renderer: null as THREE.WebGLRenderer | null,
+        particles: null as THREE.Points | null,
         
         moveForward: false,
         moveBackward: false,
@@ -154,6 +155,11 @@ export default function MuseumPage() {
             state.euler.x = THREE.MathUtils.degToRad(state.lat);
             state.camera.quaternion.setFromEuler(state.euler);
             
+            // Animate particles
+            if (state.particles) {
+                state.particles.rotation.y += delta * 0.05;
+            }
+
             const speed = 150.0;
             if (!state.isBlocked && !state.isReportVisible && (state.isMoving || state.joystickActive)) {
                 const forward = state.forwardVector.clone().applyQuaternion(state.camera.quaternion);
@@ -188,7 +194,7 @@ export default function MuseumPage() {
             try {
                 state.scene = new THREE.Scene();
                 state.scene.background = new THREE.Color(0x000000);
-                state.scene.fog = new THREE.Fog(0x000000, 100, 300);
+                state.scene.fog = new THREE.Fog(0x000000, 100, 400);
 
                 state.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 1000);
                 state.camera.position.set(0, 10, 0);
@@ -204,7 +210,7 @@ export default function MuseumPage() {
                 // Lighting
                 const ambientLight = new THREE.AmbientLight(0xFFFFFF, 0.5);
                 state.scene.add(ambientLight);
-                const directionalLight = new THREE.DirectionalLight(0xFFFFFF, 0.7);
+                const directionalLight = new THREE.DirectionalLight(0xFFDAB9, 0.8);
                 directionalLight.position.set(50, 100, 50);
                 directionalLight.castShadow = true;
                 directionalLight.shadow.mapSize.width = 1024;
@@ -232,6 +238,26 @@ export default function MuseumPage() {
                 ceiling.position.y = wallHeight;
                 ceiling.rotation.x = Math.PI / 2;
                 state.scene.add(ceiling);
+                
+                // Magical Dust Particles
+                const particleCount = 5000;
+                const particlesGeometry = new THREE.BufferGeometry();
+                const positions = new Float32Array(particleCount * 3);
+                for (let i = 0; i < particleCount; i++) {
+                    positions[i * 3] = (Math.random() - 0.5) * wallSize;
+                    positions[i * 3 + 1] = Math.random() * wallHeight;
+                    positions[i * 3 + 2] = (Math.random() - 0.5) * wallSize;
+                }
+                particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                const particlesMaterial = new THREE.PointsMaterial({
+                    color: 0xFFD700,
+                    size: 0.2,
+                    blending: THREE.AdditiveBlending,
+                    transparent: true,
+                    opacity: 0.5,
+                });
+                state.particles = new THREE.Points(particlesGeometry, particlesMaterial);
+                state.scene.add(state.particles);
 
                 // Exhibits
                 for (const name in artifacts) {
@@ -247,6 +273,11 @@ export default function MuseumPage() {
                     const artifactMesh = new THREE.Mesh(new THREE.BoxGeometry(10, 10, 10), new THREE.MeshStandardMaterial({ color: data.goal ? 0xFF0000 : 0xFFD700, metalness: 0.9, roughness: 0.1, emissive: data.goal ? 0x990000 : 0xAA8800, emissiveIntensity: 0.5 }));
                     artifactMesh.position.y = 10;
                     base.add(artifactMesh);
+
+                    // Add a subtle glow
+                    const pointLight = new THREE.PointLight(data.goal ? 0xFF4444 : 0xFFD700, 1.5, 50);
+                    pointLight.position.set(0, 15, 0);
+                    base.add(pointLight);
 
                     const glassCase = new THREE.Mesh(new THREE.BoxGeometry(32, 25, 32), new THREE.MeshPhysicalMaterial({ color: 0xFFFFFF, transparent: true, opacity: 0.1, roughness: 0, metalness: 0, transmission: 0.9, reflectivity: 0.5 }));
                     glassCase.position.y = 17.5;
@@ -370,7 +401,8 @@ export default function MuseumPage() {
         };
         
         // --- Joystick Logic ---
-        const onJoystickStart = (e: React.TouchEvent | React.MouseEvent) => {
+        const joystickElement = joystickRef.current;
+        const onJoystickStart = (e: TouchEvent | MouseEvent) => {
             e.preventDefault();
             state.joystickActive = true;
             const touch = 'touches' in e ? e.touches[0] : e;
@@ -378,7 +410,7 @@ export default function MuseumPage() {
             state.joystickStartY = touch.clientY;
         };
 
-        const onJoystickMove = (e: React.TouchEvent | React.MouseEvent) => {
+        const onJoystickMove = (e: TouchEvent | MouseEvent) => {
             if (!state.joystickActive) return;
             e.preventDefault();
             
@@ -407,7 +439,7 @@ export default function MuseumPage() {
             state.moveRight = (angle >= -threshold && angle <= threshold);
         };
 
-        const onJoystickEnd = (e: React.TouchEvent | React.MouseEvent) => {
+        const onJoystickEnd = (e: TouchEvent | MouseEvent) => {
             e.preventDefault();
             state.joystickActive = false;
             state.moveForward = state.moveBackward = state.moveLeft = state.moveRight = false;
@@ -430,6 +462,12 @@ export default function MuseumPage() {
         document.addEventListener('keyup', onKeyUp);
         window.addEventListener('resize', onWindowResize);
         
+        if (joystickElement) {
+            joystickElement.addEventListener('touchstart', onJoystickStart, { passive: false });
+            joystickElement.addEventListener('touchmove', onJoystickMove, { passive: false });
+            joystickElement.addEventListener('touchend', onJoystickEnd);
+        }
+        
         return () => {
             window.removeEventListener('resize', onWindowResize);
             document.removeEventListener('keydown', onKeyDown);
@@ -446,6 +484,11 @@ export default function MuseumPage() {
                 } catch(e) {
                     // ignore if already removed
                 }
+            }
+            if (joystickElement) {
+                joystickElement.removeEventListener('touchstart', onJoystickStart);
+                joystickElement.removeEventListener('touchmove', onJoystickMove);
+                joystickElement.removeEventListener('touchend', onJoystickEnd);
             }
         };
     }, [state, animate, alertMessage, showInfoPanel, hideInfoPanel, artifacts]);
@@ -468,22 +511,23 @@ export default function MuseumPage() {
         if (!artifact) return;
 
         setIsSpeaking(true);
-        toast({ title: 'المرشد الصوتي يتحدث...', description: 'جاري توليد الوصف الصوتي للقطعة الأثرية.' });
+        toast({ title: 'المرشد الصوتي يتحدث...', description: 'جاري توليد قصة شيقة عن القطعة الأثرية.' });
         
         try {
-            const result = await getSpeechAudio(artifact.description);
+            // Use the new storyteller flow
+            const result = await getStorytellerAudio({ title: artifact.title, description: artifact.description });
             if (result.error || !result.media) {
                 throw new Error(result.error || 'لم يتم إرجاع أي مقطع صوتي.');
             }
             const audio = new Audio(result.media);
             audio.play();
             audio.onended = () => setIsSpeaking(false);
-            toast({ title: 'تم!', description: `تشغيل وصف: "${artifact.title}"` });
+            toast({ title: 'تم!', description: `المرشد يروي قصة: "${artifact.title}"` });
         } catch (error) {
             console.error("Error playing audio:", error);
             toast({
                 variant: 'destructive',
-                title: '❌ خطأ في توليد الصوت',
+                title: '❌ خطأ في المرشد الصوتي',
                 description: (error as Error).message,
             });
             setIsSpeaking(false);
@@ -553,7 +597,7 @@ export default function MuseumPage() {
                 <div className="flex flex-col space-y-3 mt-4">
                     <button id="speak-description" onClick={speakArtifactDescription} className="info-button bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed" disabled={isSpeaking}>
                         {isSpeaking ? <span className="spinner"></span> : <i className="fas fa-volume-up ml-2"></i>}
-                        {isSpeaking ? 'جاري التحدث...' : 'استمع للوصف'}
+                        {isSpeaking ? 'جاري التحدث...' : 'استمع للمرشد الصوتي'}
                     </button>
                     <button id="toggle-puzzle" onClick={handleTogglePuzzle} className="info-button bg-yellow-600 text-black font-bold rounded-lg hover:bg-yellow-500 transition-colors shadow-md">
                         <i className="fas fa-brain ml-2"></i> لغز اليوم
@@ -570,9 +614,6 @@ export default function MuseumPage() {
                 ref={joystickRef} 
                 id="joystick-container"
                 className="hidden fixed bottom-10 left-10 w-32 h-32 bg-black bg-opacity-30 rounded-full z-20"
-                onTouchStart={e => state.isBlocked ? null : onJoystickStart(e)}
-                onTouchMove={e => state.isBlocked ? null : onJoystickMove(e)}
-                onTouchEnd={e => state.isBlocked ? null : onJoystickEnd(e)}
              >
                 <div 
                     ref={joystickHandleRef}
@@ -591,7 +632,7 @@ export default function MuseumPage() {
                     <div className="bg-gray-800 p-4 rounded-lg mb-6 shadow-inner">
                         <h2 className="text-2xl font-bold text-yellow-400 mb-3">ملخص الإنجاز</h2>
                         <div id="achievement-summary" className="text-lg">
-                            <p className="mb-2"><i className="fas fa-scroll ml-2 text-yellow-500"></i> عدد التحف التي تم استكشافها: <span id="explored-count" className="font-extrabold text-white">0</span> / 8</p>
+                            <p className="mb-2"><i className="fas fa-scroll ml-2 text-yellow-500"></i> عدد التحف التي تم استكشافها: <span id="explored-count" className="font-extrabold text-white">0</span> / 12</p>
                             <p id="goal-status" className="font-extrabold text-red-400 transition-colors">
                                 <i className="fas fa-flag ml-2"></i> حالة الهدف الرئيسي (حجر رشيد): <span id="goal-text">لم يتم الوصول إليه بعد</span>
                             </p>
@@ -618,11 +659,9 @@ export default function MuseumPage() {
                     <p className="font-bold text-xl mb-2 text-[#FFD700]">دليل التحكم والرموز:</p>
                     <p><strong>الحركة:</strong> استخدم عصا التحكم (Joystick) على الشاشة أو أزرار W/A/S/D.</p>
                     <p><strong>النظر/الدوران:</strong> <span className="text-yellow-400">اضغط بزر الماوس الأيسر واسحب</span> أو <span className="text-yellow-400">اسحب بالإصبع</span> (ضروري لرؤية جميع التحف)</p>
-                    <p><strong>التفاعل:</strong> ابحث عن الرموز الذهبية وانقر عليها لاستكشاف التحف الثمانية.</p>
+                    <p><strong>التفاعل:</strong> ابحث عن الرموز الذهبية وانقر عليها لاستكشاف التحف.</p>
                 </div>
             </div>
         </div>
     );
 }
-
-    

@@ -7,6 +7,7 @@
 import { getSpeechAudioFlow } from '@/ai/flows/speech-flow';
 import { getComicDialogueFlow, ComicDialogueInputSchema } from '@/ai/flows/comic-dialogue-flow';
 import { getDialogueEvaluationFlow, DialogueEvaluationInputSchema } from '@/ai/flows/dialogue-evaluation-flow';
+import { getStorytellerAudioFlow, StorytellerInputSchema } from '@/ai/flows/storyteller-flow';
 import { z } from 'zod';
 
 
@@ -57,4 +58,19 @@ export async function getDialogueEvaluation(values: z.infer<typeof DialogueEvalu
     console.error("Error in getDialogueEvaluation action:", e);
     return { error: "Failed to get evaluation from the AI. " + (e.message || "Please try again later.") };
   }
+}
+
+/**
+ * Server action to get a narrated story audio from the AI.
+ * @param values The title and description of the artifact.
+ * @returns A promise that resolves to the AI's generated audio.
+ */
+export async function getStorytellerAudio(values: z.infer<typeof StorytellerInputSchema>) {
+    try {
+        const result = await getStorytellerAudioFlow(values);
+        return { success: true, media: result.media };
+    } catch (e: any) {
+        console.error("Error in getStorytellerAudio action:", e);
+        return { error: "Failed to get story from the AI. " + (e.message || "Please try again later.") };
+    }
 }

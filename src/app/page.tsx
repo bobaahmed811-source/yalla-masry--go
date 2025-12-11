@@ -50,6 +50,16 @@ interface Progress {
     completedLessons: string[];
 }
 
+const getRoyalTitle = (points: number): string => {
+  if (points >= 1000) return "يد الفرعون";
+  if (points >= 750) return "كاهنة المعبد";
+  if (points >= 500) return "مهندسة ملكية";
+  if (points >= 250) return "كاتبة البردي";
+  if (points >= 100) return "تلميذة النيل";
+  return "مستجدة في المملكة";
+};
+
+
 const StatCard = ({
   icon,
   value,
@@ -179,6 +189,7 @@ export default function HomePage() {
   const { data: progresses, isLoading: isProgressLoading } = useCollection<Progress>(progressCollectionRef);
   
   const nilePoints = user?.nilePoints ?? 0;
+  const royalTitle = getRoyalTitle(nilePoints);
   
   useEffect(() => {
     const fetchCourseData = async () => {
@@ -311,7 +322,7 @@ export default function HomePage() {
                             <Loader2 className="h-6 w-6 animate-spin text-sand-ochre"/>
                        ) : (
                         <>
-                          <p className="text-sand-ochre mb-4">أنتِ حالياً في مستوى: <span className="font-bold text-white">تلميذ النيل</span></p>
+                          <p className="text-sand-ochre mb-4">لقبك الملكي الحالي: <span className="font-bold text-white text-lg">{royalTitle}</span></p>
                           <div className="progress-bar-royal mb-4">
                             <div className="progress-fill-royal" style={{ width: `${progressPercentage}%` }}></div>
                           </div>
@@ -489,5 +500,3 @@ export default function HomePage() {
     </div>
   );
 }
-
-    

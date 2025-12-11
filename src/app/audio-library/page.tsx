@@ -53,8 +53,14 @@ const audioLibraryData = [
 const PhraseRow = ({ phrase }: { phrase: { id: string, text: string, translation: string }}) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
 
   const handlePlayAudio = async () => {
+    if (audioUrl) {
+      new Audio(audioUrl).play();
+      return;
+    }
+
     setIsLoading(true);
     toast({ title: 'جاري توليد الصوت...', description: 'قد يستغرق هذا بضع ثوانٍ.' });
     try {
@@ -64,6 +70,7 @@ const PhraseRow = ({ phrase }: { phrase: { id: string, text: string, translation
         }
         const audio = new Audio(result.media);
         audio.play();
+        setAudioUrl(result.media); // Cache the audio URL
         toast({ title: 'تم!', description: `تشغيل: "${phrase.text}"` });
     } catch (error) {
         console.error("Error playing audio:", error);
