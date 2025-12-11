@@ -187,12 +187,12 @@ export default function HomePage() {
   const { data: progresses, isLoading: isProgressLoading } = useCollection<Progress>(progressCollectionRef);
   
   const nilePoints = userProfile?.nilePoints ?? 0;
-  const progressPercentage = totalLessons > 0 ? (lessonsCompleted / totalLessons) * 100 : 0;
-
+  
   useEffect(() => {
     const fetchCourseData = async () => {
         if (progresses && progresses.length > 0 && firestore) {
-            const currentProgress = progresses[0]; // Assuming one course for now
+            // Assuming one course progress document per user for now
+            const currentProgress = progresses[0]; 
             setLessonsCompleted(currentProgress.completedLessons.length);
 
             const lessonsQuery = query(collection(firestore, `courses/${currentProgress.courseId}/lessons`));
@@ -206,6 +206,8 @@ export default function HomePage() {
     };
     fetchCourseData();
   }, [progresses, firestore, isProgressLoading]);
+
+  const progressPercentage = totalLessons > 0 ? (lessonsCompleted / totalLessons) * 100 : 0;
 
 
   const handleSignOut = () => {
