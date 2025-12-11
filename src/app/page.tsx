@@ -515,8 +515,8 @@ export default function HomePage() {
                     />
                     <ChallengeLink
                       href="/gulf-gateway"
-                      title="بوابة الخليج"
-                      description="قريباً: محتوى متخصص باللهجات الخليجية."
+                      title="رحلة نوف في مصر"
+                      description="مغامرة تفاعلية لفهم اللهجة المصرية."
                       icon={<Globe />}
                     />
                   </CardContent>
@@ -561,5 +561,3 @@ export default function HomePage() {
     </div>
   );
 }
-
-    
