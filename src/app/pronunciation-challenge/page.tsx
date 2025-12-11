@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -257,7 +256,7 @@ export default function PronunciationChallengePage() {
             document.documentElement.lang = 'en';
         }
     }
-   }, []);
+   }, [currentLang]);
 
   return (
       <div className={cn("relative flex items-center justify-center min-h-screen bg-nile-dark p-4 overflow-hidden", isRtl ? "rtl" : "ltr")}>
@@ -356,5 +355,3 @@ export default function PronunciationChallengePage() {
     </div>
   );
 }
-
-    
