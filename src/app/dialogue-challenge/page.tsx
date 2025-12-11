@@ -26,8 +26,8 @@ const storyScenario = [
     text: "صباح النور. عايز كيلو طماطم لو سمحت.",
     isUser: true,
     options: [
-      { text: "الخيار 1: عايز كيلو طماطم لو سمحت.", nextId: 3, type: 'correct' },
-      { text: "الخيار 2: بكم الأرز؟", nextId: 2, type: 'wrong' }, // Corrected nextId to repeat the question
+      { text: "الخيار 1: عايز كيلو طماطم لو سمحت.", nextId: 3, type: 'correct', points: 50 },
+      { text: "الخيار 2: بكم الأرز؟", nextId: 2, type: 'wrong', points: -20 }, // Corrected nextId to repeat the question
     ],
   },
   {
@@ -43,8 +43,8 @@ const storyScenario = [
     text: "تمام، شكراً جزيلاً. اتفضل الحساب.",
     isUser: true,
     options: [
-      { text: "الخيار 1: تمام، شكراً جزيلاً. اتفضل الحساب.", nextId: 5, type: 'excellent' },
-      { text: "الخيار 2: ما عايز أي حاجة تانية.", nextId: 5, type: 'good' },
+      { text: "الخيار 1: تمام، شكراً جزيلاً. اتفضل الحساب.", nextId: 5, type: 'excellent', points: 75 },
+      { text: "الخيار 2: ما عايز أي حاجة تانية.", nextId: 5, type: 'good', points: 50 },
     ],
   },
   {
@@ -103,7 +103,7 @@ DialogueBubble.displayName = "DialogueBubble";
 // === Main Component ===
 
 export default function DialogueChallengePage() {
-  const { user, isUserLoading, firestore } = useUser(true); // Now includes firestore
+  const { user, isUserLoading, firestore } = useUser(true);
   const { toast } = useToast();
   
   const [nilePoints, setNilePoints] = useState(0); 
@@ -118,11 +118,10 @@ export default function DialogueChallengePage() {
   const alias = user?.displayName || "الزائر الملكي";
 
   useEffect(() => {
-    // This effect now correctly reads nilePoints from the user object provided by the useUser hook.
     if (user && typeof user.nilePoints === 'number') {
       setNilePoints(user.nilePoints);
     } else if (user) {
-      setNilePoints(0); // Default to 0 if not present
+      setNilePoints(0);
     }
   }, [user]);
 
@@ -154,47 +153,53 @@ export default function DialogueChallengePage() {
   
     setIsEvaluating(true);
     setFeedback(null);
-  
-    const result = await getDialogueEvaluation({ userAnswer: userText, choiceType: choice.type });
-  
-    setIsEvaluating(false);
+    
+    // --- Optimistic UI and Fast-response AI ---
+    // 1. Update points immediately (optimistic update)
+    const pointsToAward = choice.points || 0;
+    setNilePoints(prev => prev + pointsToAward);
 
-    if (result.success) {
-      const { score, feedback: feedbackMessage, isPositive } = result.success;
-      
-      // Update points in Firestore
-      const userRef = doc(firestore, 'users', user.uid);
-      await updateDoc(userRef, {
-        nilePoints: increment(score)
-      });
-      // Update local state for immediate feedback
-      setNilePoints(prev => prev + score);
+    // 2. Update Firestore in the background (non-blocking)
+    const userRef = doc(firestore, 'users', user.uid);
+    updateDoc(userRef, {
+      nilePoints: increment(pointsToAward)
+    }).catch(error => {
+        // If firestore update fails, revert the local state and notify user
+        console.error("Failed to update points:", error);
+        setNilePoints(prev => prev - pointsToAward);
+        toast({ variant: 'destructive', title: 'خطأ', description: 'فشل تحديث نقاط النيل.' });
+    });
 
-      setFeedback({ message: feedbackMessage, score, isPositive });
-      
-      // Proceed after showing feedback
-      setTimeout(() => {
-        setFeedback(null);
-        if (choice.type === 'wrong') {
-            setDialogue(prev => prev.slice(0, -1));
-        } else {
-            const nextStep = storyScenario.find(s => s.id === choice.nextId);
-            if (nextStep) {
-                setDialogue(prev => [...prev, nextStep]);
-                setCurrentStepId(choice.nextId);
-            } else {
-                setIsChallengeComplete(true);
-            }
-        }
-      }, 4000); // Wait 4 seconds to let user read feedback
-    } else {
-        toast({
-            variant: 'destructive',
-            title: 'خطأ في التقييم',
-            description: result.error || 'فشل الاتصال بالمعلم الذكي. سنكمل بدون تقييم.',
-        });
-        // Proceed without evaluation on error
-        setTimeout(() => {
+    // 3. Call AI for qualitative feedback in parallel
+    getDialogueEvaluation({ userAnswer: userText, choiceType: choice.type })
+      .then(result => {
+          setIsEvaluating(false);
+          if (result.success) {
+            const { feedback: feedbackMessage, isPositive } = result.success;
+            setFeedback({ message: feedbackMessage, score: pointsToAward, isPositive });
+            
+            // 4. Proceed to next step after showing feedback
+            setTimeout(() => {
+              setFeedback(null);
+              if (choice.type === 'wrong') {
+                  setDialogue(prev => prev.slice(0, -1)); // Go back one step
+              } else {
+                  const nextStep = storyScenario.find(s => s.id === choice.nextId);
+                  if (nextStep) {
+                      setDialogue(prev => [...prev, nextStep]);
+                      setCurrentStepId(choice.nextId);
+                  } else {
+                      setIsChallengeComplete(true);
+                  }
+              }
+            }, 4000); // Let user read feedback
+          } else {
+            // Handle AI evaluation error but still proceed
+            toast({
+                variant: 'destructive', title: 'خطأ في التقييم',
+                description: result.error || 'فشل الاتصال بالمعلم الذكي. سنكمل بدون تقييم.',
+            });
+            setIsEvaluating(false);
             const nextStep = storyScenario.find(s => s.id === choice.nextId);
             if (nextStep) {
                  setDialogue(prev => [...prev, nextStep]);
@@ -202,8 +207,9 @@ export default function DialogueChallengePage() {
             } else {
                  setIsChallengeComplete(true);
             }
-         }, 1000);
-    }
+          }
+      });
+  
   }, [alias, currentStepId, isEvaluating, isChallengeComplete, toast, user, firestore]);
   
   
@@ -297,5 +303,3 @@ export default function DialogueChallengePage() {
     </div>
   );
 };
-
-    
