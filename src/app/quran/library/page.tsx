@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -12,7 +11,7 @@ interface Book {
   id: string;
   title: string;
   author: string;
-  description: string;
+  description?: string;
   category: string;
   cover?: string;
 }
@@ -74,15 +73,13 @@ export default function LibraryPage() {
         )}
         {error && <p className="text-center text-lg text-red-400">حدث خطأ أثناء تحميل الكتب: {error.message}</p>}
         
-        {books && (
+        {books && books.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
             {books.map(book => (
               <BookCard key={book.id} book={book} />
             ))}
           </div>
-        )}
-        
-        {!isLoading && books?.length === 0 && (
+        ) : !isLoading && (
             <p className="text-center text-sand-ochre py-10">لا توجد كتب في المكتبة حالياً.</p>
         )}
       </main>

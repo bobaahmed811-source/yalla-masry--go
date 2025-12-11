@@ -473,6 +473,10 @@
           "type": "string",
           "description": "Identifier for the product purchased. This could reference a Course or other digital asset."
         },
+        "productName": {
+            "type": "string",
+            "description": "Denormalized name of the product for display purposes."
+        },
         "purchaseDate": {
           "type": "string",
           "description": "Date and time of the purchase.",
@@ -500,10 +504,25 @@
         "id",
         "userId",
         "productId",
+        "productName",
         "purchaseDate",
         "price",
         "status"
       ]
+    },
+    "Product": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Product",
+      "type": "object",
+      "description": "Represents a digital product available for purchase in the store.",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the Product." },
+        "name": { "type": "string", "description": "Name of the product." },
+        "description": { "type": "string", "description": "A short description of the product." },
+        "price": { "type": "number", "description": "The price of the product." },
+        "icon": { "type": "string", "description": "Lucide icon name to represent the product (e.g., 'ScrollText', 'Ankh')." }
+      },
+      "required": ["id", "name", "description", "price", "icon"]
     },
     "Review": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -595,11 +614,10 @@
             "id": { "type": "string", "description": "Unique identifier for the Book." },
             "title": { "type": "string", "description": "Title of the book." },
             "author": { "type": "string", "description": "Author of the book." },
-            "description": { "type": "string", "description": "A short description of the book." },
             "category": { "type": "string", "description": "Category of the book (e.g., 'Tafsir', 'Hadith')." },
             "cover": { "type": "string", "format": "uri", "description": "URL to the book cover image." }
         },
-        "required": ["id", "title", "author", "description", "category", "cover"]
+        "required": ["id", "title", "author", "category"]
     },
     "Hadith": {
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -625,280 +643,73 @@
     "structure": [
       {
         "path": "/users/{userId}",
-        "definition": {
-          "entityName": "User",
-          "schema": {
-            "$ref": "#/backend/entities/User"
-          },
-          "description": "Stores user profiles. Path-based ownership ensures only the user can access their own profile.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user."
-            }
-          ]
-        }
+        "definition": { "schema": { "$ref": "#/backend/entities/User" } }
       },
       {
         "path": "/courses/{courseId}",
-        "definition": {
-          "entityName": "Course",
-          "schema": {
-            "$ref": "#/backend/entities/Course"
-          },
-          "description": "Stores course information. Publicly accessible, but creation/modification is restricted to instructors (handled via security rules).",
-          "params": [
-            {
-              "name": "courseId",
-              "description": "The unique identifier of the course."
-            }
-          ]
-        }
+        "definition": { "schema": { "$ref": "#/backend/entities/Course" } }
       },
       {
         "path": "/courses/{courseId}/lessons/{lessonId}",
-        "definition": {
-          "entityName": "Lesson",
-          "schema": {
-            "$ref": "#/backend/entities/Lesson"
-          },
-          "description": "Stores lessons within a course. Accessible to users enrolled in the course (authorization to be determined through a separate enrollment/membership mechanism).",
-          "params": [
-            {
-              "name": "courseId",
-              "description": "The unique identifier of the course."
-            },
-            {
-              "name": "lessonId",
-              "description": "The unique identifier of the lesson."
-            }
-          ]
-        }
+        "definition": { "schema": { "$ref": "#/backend/entities/Lesson" } }
       },
       {
         "path": "/courses/{courseId}/quizzes/{quizId}",
-        "definition": {
-          "entityName": "Quiz",
-          "schema": {
-            "$ref": "#/backend/entities/Quiz"
-          },
-          "description": "Stores quizzes within a course. Accessible to users enrolled in the course.",
-          "params": [
-            {
-              "name": "courseId",
-              "description": "The unique identifier of the course."
-            },
-            {
-              "name": "quizId",
-              "description": "The unique identifier of the quiz."
-            }
-          ]
-        }
+        "definition": { "schema": { "$ref": "#/backend/entities/Quiz" } }
       },
       {
         "path": "/quizzes/{quizId}/questions/{questionId}",
-        "definition": {
-          "entityName": "Question",
-          "schema": {
-            "$ref": "#/backend/entities/Question"
-          },
-          "description": "Stores questions within a quiz.  Accessible to users enrolled in the course.",
-          "params": [
-            {
-              "name": "quizId",
-              "description": "The unique identifier of the quiz."
-            },
-            {
-              "name": "questionId",
-              "description": "The unique identifier of the question."
-            }
-          ]
-        }
+        "definition": { "schema": { "$ref": "#/backend/entities/Question" } }
       },
       {
         "path": "/courses/{courseId}/assignments/{assignmentId}",
-        "definition": {
-          "entityName": "Assignment",
-          "schema": {
-            "$ref": "#/backend/entities/Assignment"
-          },
-          "description": "Stores assignments within a course. Accessible to users enrolled in the course.",
-          "params": [
-            {
-              "name": "courseId",
-              "description": "The unique identifier of the course."
-            },
-            {
-              "name": "assignmentId",
-              "description": "The unique identifier of the assignment."
-            }
-          ]
-        }
+        "definition": { "schema": { "$ref": "#/backend/entities/Assignment" } }
       },
       {
         "path": "/users/{userId}/progress/{progressId}",
-        "definition": {
-          "entityName": "Progress",
-          "schema": {
-            "$ref": "#/backend/entities/Progress"
-          },
-          "description": "Stores user progress for a course. Path-based ownership ensures only the user can access their own progress data.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user."
-            },
-            {
-              "name": "progressId",
-              "description": "The unique identifier of the progress entity."
-            }
-          ]
-        }
+        "definition": { "schema": { "$ref": "#/backend/entities/Progress" } }
       },
       {
         "path": "/instructors/{instructorId}",
-        "definition": {
-          "entityName": "Instructor",
-          "schema": {
-            "$ref": "#/backend/entities/Instructor"
-          },
-          "description": "Stores instructor profiles. Publicly accessible, but creation/modification is restricted to admins.",
-          "params": [
-            {
-              "name": "instructorId",
-              "description": "The unique identifier of the instructor."
-            }
-          ]
-        }
+        "definition": { "schema": { "$ref": "#/backend/entities/Instructor" } }
       },
       {
         "path": "/instructors/{instructorId}/reviews/{reviewId}",
-        "definition": {
-          "entityName": "Review",
-          "schema": {
-            "$ref": "#/backend/entities/Review"
-          },
-          "description": "Stores student reviews for a specific instructor. Publicly readable.",
-          "params": [
-            {
-              "name": "instructorId",
-              "description": "The ID of the instructor being reviewed."
-            },
-            {
-              "name": "reviewId",
-              "description": "The unique identifier of the review."
-            }
-          ]
-        }
+        "definition": { "schema": { "$ref": "#/backend/entities/Review" } }
       },
       {
         "path": "/messages/{messageId}",
-        "definition": {
-          "entityName": "ChatMessage",
-          "schema": {
-            "$ref": "#/backend/entities/ChatMessage"
-          },
-          "description": "Stores private chat messages between users. Security rules should ensure only the sender and receiver can access the message.",
-          "params": [
-            {
-              "name": "messageId",
-              "description": "The unique identifier of the chat message."
-            }
-          ]
-        }
+        "definition": { "schema": { "$ref": "#/backend/entities/ChatMessage" } }
       },
       {
         "path": "/community_messages/{messageId}",
-        "definition": {
-          "entityName": "CommunityMessage",
-          "schema": {
-            "$ref": "#/backend/entities/CommunityMessage"
-          },
-          "description": "Stores public messages in a community chat room. Readable and writable by any authenticated user.",
-          "params": [
-            {
-              "name": "messageId",
-              "description": "The unique identifier of the community message."
-            }
-          ]
-        }
+        "definition": { "schema": { "$ref": "#/backend/entities/CommunityMessage" } }
       },
       {
         "path": "/users/{userId}/ai_interactions/{interactionId}",
-        "definition": {
-          "entityName": "AIInteraction",
-          "schema": {
-            "$ref": "#/backend/entities/AIInteraction"
-          },
-          "description": "Stores AI interaction logs for a user. Path-based ownership ensures only the user can access their own interaction logs.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user."
-            },
-            {
-              "name": "interactionId",
-              "description": "The unique identifier of the AI interaction."
-            }
-          ]
-        }
+        "definition": { "schema": { "$ref": "#/backend/entities/AIInteraction" } }
       },
       {
         "path": "/artifacts/{appId}/public/data/digital_purchases/{purchaseId}",
-        "definition": {
-          "entityName": "Purchase",
-          "schema": {
-            "$ref": "#/backend/entities/Purchase"
-          },
-          "description": "Stores data regarding digital purchases. Includes denormalized 'userId' for authorization independence.",
-          "params": [
-            {
-              "name": "appId",
-              "description": "The unique identifier of the application (e.g., to distinguish environments or versions)."
-            },
-            {
-              "name": "purchaseId",
-              "description": "The unique identifier of the purchase."
-            }
-          ]
-        }
+        "definition": { "schema": { "$ref": "#/backend/entities/Purchase" } }
       },
       {
         "path": "/artifacts/{appId}/users/{userId}/comic_performances/{performanceId}",
-        "definition": {
-          "entityName": "ComicPerformance",
-          "schema": { "$ref": "#/backend/entities/ComicPerformance" },
-          "description": "Stores a student's recorded voice-over for a comic dialogue. Path-based ownership ensures only the user can create and manage their own performances.",
-          "params": [
-            { "name": "appId", "description": "The application identifier." },
-            { "name": "userId", "description": "The user's unique identifier." },
-            { "name": "performanceId", "description": "The unique identifier for the performance record." }
-          ]
-        }
+        "definition": { "schema": { "$ref": "#/backend/entities/ComicPerformance" } }
+      },
+      {
+        "path": "/products/{productId}",
+        "definition": { "schema": { "$ref": "#/backend/entities/Product" } }
       },
       {
         "path": "/books/{bookId}",
-        "definition": {
-          "entityName": "Book",
-          "schema": { "$ref": "#/backend/entities/Book" },
-          "description": "Stores books for the digital library. Publicly readable.",
-          "params": [
-            { "name": "bookId", "description": "The unique identifier for the book." }
-          ]
-        }
+        "definition": { "schema": { "$ref": "#/backend/entities/Book" } }
       },
       {
         "path": "/hadiths/{hadithId}",
-        "definition": {
-          "entityName": "Hadith",
-          "schema": { "$ref": "#/backend/entities/Hadith" },
-          "description": "Stores Hadiths for the Sunnah section. Publicly readable.",
-          "params": [
-            { "name": "hadithId", "description": "The unique identifier for the Hadith." }
-          ]
-        }
+        "definition": { "schema": { "$ref": "#/backend/entities/Hadith" } }
       }
     ],
-    "reasoning": "This Firestore structure prioritizes security and scalability for the EdTech platform, focusing on authorization independence and clear access patterns. It leverages path-based ownership for user-specific data and membership maps for collaborative data access, eliminating the need for `get()` calls in security rules and ensuring atomic operations.\n\nThe core principle is **Authorization Independence**. For the `/artifacts/{appId}/public/data/digital_purchases` collection, even though the data is 'public', security is maintained because each document contains the `userId`. Rules are structured to ensure only the authenticated user can create a purchase request for themselves. The `appId` parameter in the path allows for segregation and management of data within specific application contexts, which is useful for multi-tenant environments or different versions of the EdTech platform.\n\n**QAPs (Rules are not Filters):**\n*   The structure supports secure `list` operations by segregating data into collections with homogeneous security postures. For example, purchase requests are stored in a dedicated collection `/artifacts/{appId}/public/data/digital_purchases`, where access is controlled based on the `userId` within each document, allowing for listing purchases securely.\n\n**Denormalization**: The `userId` is denormalized into the `/artifacts/{appId}/public/data/digital_purchases` collection, where access control can depend directly on the attributes stored in the document. A new `/instructors/{instructorId}/reviews/{reviewId}` path is added for storing student reviews. This is publicly readable but writing is restricted to authenticated users to prevent spam. A new collection for `instructors` has been added to support the admin dashboard functionality, with rules initially allowing any signed-in user to manage them for ease of prototyping.\n\nA new `community_messages` collection is added for the public chat feature. Security rules are configured to allow any authenticated user to read from and write to this collection, fostering an open communication environment for students. Updates and deletes are disallowed to maintain the integrity of the chat history. A new path for `comic_performances` is added under `/artifacts/{appId}/users/{userId}` to store user-generated content securely with path-based ownership. New publicly readable collections for `books` and `hadiths` have been added to support the Quran Oasis section."
+    "reasoning": "This Firestore structure prioritizes security and scalability for the EdTech platform, focusing on authorization independence and clear access patterns. It leverages path-based ownership for user-specific data and membership maps for collaborative data access, eliminating the need for `get()` calls in security rules and ensuring atomic operations.\n\nThe core principle is **Authorization Independence**. For the `/artifacts/{appId}/public/data/digital_purchases` collection, even though the data is 'public', security is maintained because each document contains the `userId`. Rules are structured to ensure only the authenticated user can create a purchase request for themselves. The `appId` parameter in the path allows for segregation and management of data within specific application contexts, which is useful for multi-tenant environments or different versions of the EdTech platform.\n\n**QAPs (Rules are not Filters):**\n*   The structure supports secure `list` operations by segregating data into collections with homogeneous security postures. For example, purchase requests are stored in a dedicated collection `/artifacts/{appId}/public/data/digital_purchases`, where access is controlled based on the `userId` within each document, allowing for listing purchases securely.\n\n**Denormalization**: The `userId` is denormalized into the `/artifacts/{appId}/public/data/digital_purchases` collection, where access control can depend directly on the attributes stored in the document. A new `/instructors/{instructorId}/reviews/{reviewId}` path is added for storing student reviews. This is publicly readable but writing is restricted to authenticated users to prevent spam. A new collection for `instructors` has been added to support the admin dashboard functionality, with rules initially allowing any signed-in user to manage them for ease of prototyping.\n\nA new `community_messages` collection is added for the public chat feature. Security rules are configured to allow any authenticated user to read from and write to this collection, fostering an open communication environment for students. Updates and deletes are disallowed to maintain the integrity of the chat history. A new path for `comic_performances` is added under `/artifacts/{appId}/users/{userId}` to store user-generated content securely with path-based ownership. New publicly readable collections for `products`, `books`, and `hadiths` have been added to support the admin dashboard and dynamic content management."
   }
 }

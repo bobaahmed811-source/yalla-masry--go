@@ -9,14 +9,6 @@
  * avoiding slow and costly `get()` calls. This ensures rules are performant and scalable.
  * The default posture is to deny access unless explicitly granted.
  *
- * Data Structure:
- * - User-specific data (profiles, progress, AI interactions) is stored in subcollections
- *   under `/users/{userId}`, ensuring strict path-based ownership.
- * - Publicly readable content like courses and instructor profiles are in top-level collections.
- * - Transactional data, such as digital purchases, is stored in a structured top-level
- *   path `/artifacts/{appId}/public/data/digital_purchases` to segregate it from core
- *   application data while maintaining security through denormalized ownership fields.
- *
  */
 rules_version = '2';
 service cloud.firestore {
@@ -25,49 +17,14 @@ service cloud.firestore {
     // --------------------------------
     // Helper Functions
     // --------------------------------
-
-    /**
-     * Checks if a user is authenticated.
-     */
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    /**
-     * Checks if the currently authenticated user's UID matches the provided userId.
-     * This is the foundation of the user-ownership model.
-     */
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
-    /**
-     * A robust check for update/delete operations, ensuring the document exists
-     * and the user is the owner. Prevents acting on non-existent data.
-     */
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
-    }
-
-    /**
-     * For chat messages, checks if the authenticated user is either the sender or receiver.
-     * Requires that `senderId` and `receiverId` fields are on the message document.
-     */
-    function isSenderOrReceiver() {
-      return isSignedIn() && (request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.receiverId);
-    }
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    function isExistingOwner(userId) { return isOwner(userId) && resource != null; }
+    function isSenderOrReceiver() { return isSignedIn() && (request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.receiverId); }
 
     // --------------------------------
     // User Data
     // --------------------------------
-
-    /**
-     * @description Manages user profile data.
-     * @path /users/{userId}
-     * @allow (create) An authenticated user creating their own user profile document for the first time.
-     * @deny (get) An authenticated user trying to read another user's profile.
-     * @principle Restricts access to a user's own data tree and prevents user enumeration.
-     */
     match /users/{userId} {
       allow get: if isOwner(userId);
       allow list: if false;
@@ -76,13 +33,6 @@ service cloud.firestore {
       allow delete: if isExistingOwner(userId);
     }
 
-    /**
-     * @description Manages a user's progress within courses.
-     * @path /users/{userId}/progress/{progressId}
-     * @allow (create) An authenticated user creating a progress document for themselves.
-     * @deny (list) An authenticated user trying to list another user's progress.
-     * @principle Enforces strict data ownership within a user's private subcollection.
-     */
     match /users/{userId}/progress/{progressId} {
       allow get, list: if isOwner(userId);
       allow create: if isOwner(userId) && request.resource.data.userId == userId;
@@ -90,119 +40,55 @@ service cloud.firestore {
       allow delete: if isExistingOwner(userId);
     }
 
-    /**
-     * @description Manages logs of a user's interactions with an AI assistant.
-     * @path /users/{userId}/ai_interactions/{interactionId}
-     * @allow (get) An authenticated user reading their own past AI interactions.
-     * @deny (create) An authenticated user trying to log an AI interaction for another user.
-     * @principle Enforces strict data ownership within a user's private subcollection.
-     */
     match /users/{userId}/ai_interactions/{interactionId} {
       allow get, list: if isOwner(userId);
       allow create: if isOwner(userId) && request.resource.data.userId == userId;
       allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
       allow delete: if isExistingOwner(userId);
     }
-
-    // --------------------------------
-    // Public Content (Courses, Instructors, Quran Oasis)
-    // --------------------------------
-
-    /**
-     * @description Publicly accessible course information.
-     * @path /courses/{courseId}
-     * @allow (get) Any user, including unauthenticated users, can read course details.
-     * @deny (create) Any user attempting to create, update, or delete a course.
-     * @principle Allows public read access for catalogues, but denies all writes. An admin/instructor role is needed to grant write access.
-     */
-    match /courses/{courseId} {
-      allow get, list: if true;
-      allow create, update, delete: if false; // TODO: Implement write rules once an instructor/admin role system is defined.
+    
+    match /artifacts/{appId}/users/{userId}/comic_performances/{performanceId} {
+      allow get, list, update, delete: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
     }
+    
+    // --------------------------------
+    // Public & Admin-Managed Content
+    // --------------------------------
 
-    /**
-     * @description Course content like lessons, quizzes, and assignments.
-     * @path /courses/{courseId}/{subcollection}/{docId}
-     * @allow (none) No access is granted by default.
-     * @deny (get) Any user trying to access course content.
-     * @principle Denies all access by default. Secure access requires denormalizing an enrollment list (e.g., a `members` map) onto the parent course document.
-     */
+    // Publicly readable content
+    match /courses/{courseId} { allow get, list: if true; allow write: if false; /* TODO: Admin/Instructor only */ }
+    match /products/{productId} { allow get, list: if true; allow write: if isSignedIn(); /* DANGER: For prototyping only */ }
+    match /books/{bookId} { allow get, list: if true; allow write: if isSignedIn(); /* DANGER: For prototyping only */ }
+    match /hadiths/{hadithId} { allow get, list: if true; allow write: if isSignedIn(); /* DANGER: For prototyping only */ }
+    
+    // Course content - should require enrollment
     match /courses/{courseId}/{subcollection}/{docId} {
        allow get, list: if false; // TODO: Grant access based on a user enrollment check.
-       allow create, update, delete: if false; // TODO: Grant access to course instructors/admins.
+       allow write: if false; // TODO: Grant access to course instructors/admins.
     }
-
-    /**
-     * @description Questions that belong to a quiz.
-     * @path /quizzes/{quizId}/questions/{questionId}
-     * @allow (none) No access is granted by default.
-     * @deny (get) Any user trying to access quiz questions directly.
-     * @principle Denies all access by default. Secure access requires checking enrollment in the course that contains this quiz.
-     */
+    
     match /quizzes/{quizId}/questions/{questionId} {
       allow get, list: if false; // TODO: Grant access based on user enrollment in the parent course.
-      allow create, update, delete: if false; // TODO: Grant access to course instructors/admins.
+      allow write: if false; // TODO: Grant access to course instructors/admins.
     }
 
-    /**
-     * @description Publicly accessible instructor profiles.
-     * @path /instructors/{instructorId}
-     * @allow (get, list) Anyone can read instructor profiles.
-     * @deny (create, update, delete) For prototyping, allow any signed-in user to manage instructors.
-     * @principle Publicly readable, but write access is initially open for prototyping an admin dashboard.
-     */
+    // Instructor profiles and their reviews
     match /instructors/{instructorId} {
       allow get, list: if true;
-      allow write: if isSignedIn(); // DANGER: For prototyping only. Allows any authenticated user to manage instructors.
+      allow write: if isSignedIn(); // DANGER: For prototyping, allows any signed-in user to manage instructors.
     }
-
-    /**
-     * @description Student reviews for a specific instructor.
-     * @path /instructors/{instructorId}/reviews/{reviewId}
-     * @allow (get, list) Anyone can read reviews.
-     * @allow (create) Any signed-in user can create a review for an instructor, but only for themselves.
-     * @deny (update, delete) No one can update or delete reviews to maintain integrity.
-     */
     match /instructors/{instructorId}/reviews/{reviewId} {
       allow get, list: if true;
       allow create: if isSignedIn() && request.resource.data.studentId == request.auth.uid;
       allow update, delete: if false;
     }
     
-    /**
-     * @description Islamic books in the digital library.
-     * @path /books/{bookId}
-     * @allow (read) Anyone can read the list of books.
-     * @deny (write) All write operations are denied for now.
-     */
-    match /books/{bookId} {
-        allow get, list: if true;
-        allow write: if false; // TODO: Restrict writes to admins
-    }
-
-    /**
-     * @description Hadiths in the Sunnah section.
-     * @path /hadiths/{hadithId}
-     * @allow (read) Anyone can read the Hadiths.
-     * @deny (write) All write operations are denied for now.
-     */
-    match /hadiths/{hadithId} {
-        allow get, list: if true;
-        allow write: if false; // TODO: Restrict writes to admins
-    }
-
-
     // --------------------------------
-    // Collaborative Data (Messages)
+    // Collaborative & Transactional Data
     // --------------------------------
 
-    /**
-     * @description Private chat messages between two users.
-     * @path /messages/{messageId}
-     * @allow (get) The sender or receiver of the message reading it.
-     * @deny (get) A third-party user trying to read a message not addressed to them.
-     * @principle Enforces access based on denormalized `senderId` and `receiverId` fields on the document. Disallows listing all messages.
-     */
+    // Private messages between two users
     match /messages/{messageId} {
       allow get: if isSenderOrReceiver();
       allow list: if false;
@@ -211,47 +97,18 @@ service cloud.firestore {
       allow delete: if resource != null && isSenderOrReceiver();
     }
     
-    /**
-     * @description Public community chat messages.
-     * @path /community_messages/{messageId}
-     * @allow (read, list) Any signed-in user can read the community chat.
-     * @allow (create) Any signed-in user can send a message, but only as themselves.
-     * @deny (update, delete) No one can edit or delete messages to maintain chat integrity.
-     */
+    // Public community chat
     match /community_messages/{messageId} {
       allow get, list: if isSignedIn();
       allow create: if isSignedIn() && request.resource.data.senderId == request.auth.uid;
       allow update, delete: if false;
     }
 
-    // --------------------------------
-    // Application & Transactional Data
-    // --------------------------------
-
-    /**
-     * @description Stores digital purchase records created by users.
-     * @path /artifacts/{appId}/public/data/digital_purchases/{purchaseId}
-     * @allow (create) An authenticated user creating a purchase record for themselves.
-     * @allow (get, list) An authenticated user can read their own purchase records.
-     * @deny (list) Denies listing all purchase records in the system.
-     * @principle Users can create their own purchase requests. Reading is restricted to the owner. Updates and deletes are disabled for users.
-     */
+    // Purchase records
     match /artifacts/{appId}/public/data/digital_purchases/{purchaseId} {
       allow get, list: if resource != null && isOwner(resource.data.userId);
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       allow update, delete: if false; // TODO: Allow backend/admin roles to update status.
-    }
-    
-    /**
-     * @description Stores a student's recorded comic voice-over performance.
-     * @path /artifacts/{appId}/users/{userId}/comic_performances/{performanceId}
-     * @allow (create) An authenticated user can create a performance record for themselves.
-     * @deny (list, get, update, delete) For now, users can only add. Future rules could allow updates or reads.
-     * @principle Path-based ownership ensures users can only write to their own subcollection.
-     */
-    match /artifacts/{appId}/users/{userId}/comic_performances/{performanceId} {
-      allow get, list, update, delete: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
     }
   }
 }

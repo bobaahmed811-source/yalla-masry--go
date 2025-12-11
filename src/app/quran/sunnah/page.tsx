@@ -60,15 +60,13 @@ export default function SunnahPage() {
         )}
         {error && <p className="text-center text-lg text-red-400">حدث خطأ أثناء تحميل الأحاديث: {error.message}</p>}
         
-        {hadiths && (
+        {hadiths && hadiths.length > 0 ? (
           <div className="space-y-6">
             {hadiths.map(hadith => (
               <HadithCard key={hadith.id} hadith={hadith} />
             ))}
           </div>
-        )}
-        
-        {!isLoading && hadiths?.length === 0 && (
+        ) : !isLoading && (
             <p className="text-center text-sand-ochre py-10">لا توجد أحاديث في الروضة حالياً.</p>
         )}
       </main>

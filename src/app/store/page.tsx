@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -6,23 +5,22 @@ import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebas
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { collection, query, where } from 'firebase/firestore';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Gift, PiggyBank, ShoppingCart, History, ArrowLeft, Loader2, Ankh, ScrollText, Lock, CheckCircle } from 'lucide-react';
+import { Gift, ShoppingCart, History, ArrowLeft, Loader2, CheckCircle, ScrollText, Ankh } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 
-
-// Define the structure for a payment message
+// --- Type Definitions ---
 type PaymentMessage = {
   type: 'success' | 'error' | 'info' | null;
   title: string;
   body: string;
 };
 
-// Define the structure for a purchase document
 interface Purchase {
     id: string;
     productId: string;
+    productName?: string;
     price: number;
     purchaseDate: string;
     status: 'Awaiting Payment' | 'Completed' | 'Refunded';
@@ -30,30 +28,50 @@ interface Purchase {
     recipientEmail?: string;
 }
 
+interface Product {
+    id: string;
+    name: string;
+    description: string;
+    price: number;
+    icon: 'ScrollText' | 'Ankh';
+}
+
+const ICONS: Record<string, React.ElementType> = {
+    ScrollText,
+    Ankh,
+};
+
 export default function StorePage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
   const [paymentMessage, setPaymentMessage] = useState<PaymentMessage | null>(null);
   const [giftEmail, setGiftEmail] = useState('');
-  const [giftProduct, setGiftProduct] = useState('wisdom_papyrus');
+  const [giftProduct, setGiftProduct] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState('treasures');
 
-  const appId = 'yalla-masry-academy'; // This ID would typically come from your environment configuration
-
+  const appId = 'yalla-masry-academy';
   const purchasesCollectionPath = `/artifacts/${appId}/public/data/digital_purchases`;
 
-  // Firestore query for the user's purchase history
+  // --- Firestore Queries ---
+  const productsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'products') : null, [firestore]);
   const userPurchasesQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return query(collection(firestore, purchasesCollectionPath), where('userId', '==', user.uid));
   }, [firestore, user, purchasesCollectionPath]);
 
+  const { data: products, isLoading: isLoadingProducts } = useCollection<Product>(productsQuery);
   const { data: purchases, isLoading: isLoadingPurchases } = useCollection<Purchase>(userPurchasesQuery);
 
+  useEffect(() => {
+    if (products && products.length > 0 && !giftProduct) {
+        setGiftProduct(products[0].id);
+    }
+  }, [products, giftProduct]);
 
-  const buyProduct = async (productName: string, price: number, isGift: boolean = false, recipientEmail: string | null = null) => {
+
+  const buyProduct = async (product: Product, isGift: boolean = false, recipientEmail: string | null = null) => {
     setIsSubmitting(true);
     setPaymentMessage(null);
 
@@ -75,8 +93,9 @@ export default function StorePage() {
 
     const purchaseData: any = {
       userId: user.uid,
-      productId: productName,
-      price: price,
+      productId: product.id,
+      productName: product.name,
+      price: product.price,
       status: 'Awaiting Payment',
       purchaseDate: new Date().toISOString(),
       isGift: isGift,
@@ -85,16 +104,14 @@ export default function StorePage() {
         purchaseData.recipientEmail = recipientEmail;
     }
     
-    // Non-blocking write to Firestore
     addDocumentNonBlocking(collection(firestore, purchasesCollectionPath), purchaseData);
 
-    // Display optimistic success message immediately
     const successMessageBody = isGift 
       ? `<strong>تم تسجيل طلبك بنجاح!</strong><br/><br/>
-         شكراً لك على كرمك! طلبك لإهداء <strong>"${productName}"</strong> إلى ${recipientEmail} قيد المراجعة.<br/><br/>
+         شكراً لك على كرمك! طلبك لإهداء <strong>"${product.name}"</strong> إلى ${recipientEmail} قيد المراجعة.<br/><br/>
          سيتم التواصل معك عبر بريدك لإتمام الدفع، وبعدها سنقوم بإرسال الهدية بالنيابة عنك.`
       : `<strong>تم تسجيل طلبك بنجاح!</strong><br/><br/>
-         مرحباً بك في خطوتك الأولى نحو الإتقان! طلبك لشراء <strong>"${productName}"</strong> هو الآن قيد المراجعة.<br/><br/>
+         مرحباً بك في خطوتك الأولى نحو الإتقان! طلبك لشراء <strong>"${product.name}"</strong> هو الآن قيد المراجعة.<br/><br/>
          <strong>الخطوة التالية:</strong> لإتمام عملية الشراء، سيقوم فريق الإدارة لدينا بالتواصل معك عبر البريد الإلكتروني المسجل لدينا خلال الساعات القادمة لتزويدك برابط دفع آمن ومباشر.`;
 
     setPaymentMessage({
@@ -103,7 +120,6 @@ export default function StorePage() {
         body: successMessageBody,
     });
     
-    // Clear the form and reset state
     if (isGift) setGiftEmail('');
     setIsSubmitting(false);
   };
@@ -118,17 +134,20 @@ export default function StorePage() {
   }
 
   const handleSendGift = () => {
-    const productPrice = giftProduct === 'wisdom_papyrus' ? 120 : 180;
-    const productName = giftProduct === 'wisdom_papyrus' ? 'بردية حكمة بتاح حتب' : 'مفتاح الحياة الصوتي';
-    buyProduct(productName, productPrice, true, giftEmail);
+    const productToSend = products?.find(p => p.id === giftProduct);
+    if (productToSend) {
+        buyProduct(productToSend, true, giftEmail);
+    } else {
+        toast({ variant: 'destructive', title: 'خطأ', description: 'المنتج المحدد غير موجود.' });
+    }
   }
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    setPaymentMessage(null); // Clear message when switching tabs
+    setPaymentMessage(null);
   }
   
-  if (isUserLoading) {
+  if (isUserLoading || isLoadingProducts) {
       return (
         <div className="flex justify-center items-center h-screen bg-nile-dark">
             <Loader2 className="w-12 h-12 text-gold-accent animate-spin" />
@@ -150,12 +169,12 @@ export default function StorePage() {
 
       <main className="max-w-6xl mx-auto">
          {paymentMessage && (
-            <div className={`p-6 rounded-xl mb-8 shadow-lg transition-all duration-300 ${paymentMessage.type === 'success' ? 'bg-green-800/20 border-green-500' : paymentMessage.type === 'error' ? 'bg-red-800/20 border-red-500' : 'bg-blue-800/20 border-blue-500'} border`}>
+            <div className={`p-6 rounded-xl mb-8 shadow-lg transition-all duration-300 ${paymentMessage.type === 'success' ? 'bg-green-800/20 border-green-500' : 'bg-red-800/20 border-red-500'} border`}>
                 <div className="flex items-center gap-4">
                     <CheckCircle className="w-10 h-10 text-green-400" />
                     <div>
-                        <p className={`font-extrabold text-2xl mb-1 ${paymentMessage.type === 'success' ? 'text-green-300' : paymentMessage.type === 'error' ? 'text-red-300' : 'text-blue-300'}`}>{paymentMessage.title}</p>
-                        <div className={`text-md ${paymentMessage.type === 'success' ? 'text-green-200' : paymentMessage.type === 'error' ? 'text-red-200' : 'text-blue-200'} space-y-2`} dangerouslySetInnerHTML={{ __html: paymentMessage.body }}></div>
+                        <p className={`font-extrabold text-2xl mb-1 ${paymentMessage.type === 'success' ? 'text-green-300' : 'text-red-300'}`}>{paymentMessage.title}</p>
+                        <div className={`text-md ${paymentMessage.type === 'success' ? 'text-green-200' : 'text-red-200'} space-y-2`} dangerouslySetInnerHTML={{ __html: paymentMessage.body }}></div>
                     </div>
                 </div>
             </div>
@@ -169,32 +188,28 @@ export default function StorePage() {
             </TabsList>
             
             <TabsContent value="treasures" className="mt-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  
-                  <div className="dashboard-card p-6 rounded-xl flex flex-col text-center items-center">
-                    <ScrollText className="w-20 h-20 text-gold-accent mb-4"/>
-                    <h3 className="text-2xl font-bold royal-title mb-3">بردية حكمة بتاح حتب</h3>
-                    <p className="text-sand-ochre mb-4 flex-grow">نسخة رقمية طبق الأصل من بردية نادرة تحتوي على حكم ومواعظ قديمة لتعميق فهمك الثقافي.</p>
-                    <div className="flex justify-between items-center mt-6 w-full">
-                      <span className="text-4xl font-extrabold text-white">$120</span>
-                      <Button onClick={() => buyProduct('بردية حكمة بتاح حتب', 120)} disabled={isSubmitting || !user} className="cta-button">
-                        {isSubmitting ? <Loader2 className="animate-spin"/> : 'اطلب الآن'}
-                      </Button>
+                {products && products.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {products.map(product => {
+                            const Icon = ICONS[product.icon] || ScrollText;
+                            return (
+                                <div key={product.id} className="dashboard-card p-6 rounded-xl flex flex-col text-center items-center">
+                                    <Icon className="w-20 h-20 text-gold-accent mb-4"/>
+                                    <h3 className="text-2xl font-bold royal-title mb-3">{product.name}</h3>
+                                    <p className="text-sand-ochre mb-4 flex-grow">{product.description}</p>
+                                    <div className="flex justify-between items-center mt-6 w-full">
+                                    <span className="text-4xl font-extrabold text-white">${product.price}</span>
+                                    <Button onClick={() => buyProduct(product)} disabled={isSubmitting || !user} className="cta-button">
+                                        {isSubmitting ? <Loader2 className="animate-spin"/> : 'اطلب الآن'}
+                                    </Button>
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
-                  </div>
-                  
-                  <div className="dashboard-card p-6 rounded-xl flex flex-col text-center items-center">
-                     <Ankh className="w-20 h-20 text-gold-accent mb-4"/>
-                    <h3 className="text-2xl font-bold royal-title mb-3">مفتاح الحياة الصوتي</h3>
-                    <p className="text-sand-ochre mb-4 flex-grow">مجموعة صوتية حصرية بجودة استوديو، تحتوي على تأملات وقصص من مصر القديمة لتدريب أذنك على اللغة.</p>
-                    <div className="flex justify-between items-center mt-6 w-full">
-                      <span className="text-4xl font-extrabold text-white">$180</span>
-                      <Button onClick={() => buyProduct('مفتاح الحياة الصوتي', 180)} disabled={isSubmitting || !user} className="cta-button">
-                         {isSubmitting ? <Loader2 className="animate-spin"/> : 'اطلب الآن'}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
+                ) : (
+                    <p className="text-center text-sand-ochre py-10">لا توجد منتجات في المتجر حالياً.</p>
+                )}
                  {!user && (
                     <div className="mt-8 p-4 bg-yellow-900/50 text-yellow-300 border border-yellow-500 rounded-lg text-center">
                         يجب <Link href="/login" className="font-bold underline">تسجيل الدخول</Link> لتتمكن من شراء الكنوز.
@@ -215,8 +230,7 @@ export default function StorePage() {
                         <div>
                             <label htmlFor="gift_product" className="font-bold text-sand-ochre">اختر الهدية:</label>
                              <select id="gift_product" value={giftProduct} onChange={(e) => setGiftProduct(e.target.value)} className="w-full p-2 mt-1 border-2 bg-nile-dark border-sand-ochre/50 rounded-lg focus:ring-gold-accent focus:border-gold-accent text-white">
-                                <option value="wisdom_papyrus">بردية حكمة بتاح حتب ($120)</option>
-                                <option value="ankh_audio">مفتاح الحياة الصوتي ($180)</option>
+                                {products?.map(p => <option key={p.id} value={p.id}>{p.name} (${p.price})</option>)}
                              </select>
                         </div>
                         <Button onClick={handleSendGift} disabled={isSubmitting || !user} className="w-full cta-button text-lg">
@@ -237,7 +251,7 @@ export default function StorePage() {
                             {purchases.map(p => (
                                 <div key={p.id} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center p-4 border border-sand-ochre/20 rounded-lg bg-nile/50">
                                     <div className="md:col-span-2">
-                                        <p className="font-bold text-white">{p.productId}</p>
+                                        <p className="font-bold text-white">{p.productName || p.productId}</p>
                                         <p className="text-sm text-gray-400">{new Date(p.purchaseDate).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric'})}</p>
                                          {p.isGift && <p className="text-xs text-pink-400 font-semibold"> (هدية إلى: {p.recipientEmail})</p>}
                                     </div>
