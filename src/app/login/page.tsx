@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -61,8 +62,8 @@ export default function LoginPage() {
                 title: `مرحباً بعودتك يا ${result.user.displayName || 'فرعون'}!`,
                 description: "تم تسجيل دخولك بنجاح."
             });
-            // Check if user is new (has no display name maybe) and redirect to goals
-            // For now, we assume existing users go to dashboard
+            // This logic is now handled by the useUser hook redirecting logic.
+            // But we can keep a fallback for safety.
             if(!result.user.displayName) {
                 router.push('/goals');
             } else {

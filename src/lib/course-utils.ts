@@ -13,11 +13,13 @@ import {
   doc,
   updateDoc,
   arrayUnion,
+  getDoc,
 } from 'firebase/firestore';
 
 /**
  * Creates the initial progress document for a new user.
  * It finds the first course and its first lesson to set the starting point.
+ * If a progress document for the first course already exists, it does nothing.
  * @param firestore The Firestore instance.
  * @param userId The ID of the user.
  */
@@ -35,19 +37,25 @@ export async function createInitialProgress(firestore: Firestore, userId: string
 
   const firstCourse = coursesSnapshot.docs[0];
   const courseId = firstCourse.id;
+  const progressDocId = `${userId}_${courseId}`;
+  
+  // Check if progress for this course already exists
+  const existingProgressRef = doc(firestore, `users/${userId}/progress`, progressDocId);
+  const existingProgressSnap = await getDoc(existingProgressRef);
+
+  if (existingProgressSnap.exists()) {
+    console.log(`Progress for course ${courseId} already exists for user ${userId}. Skipping creation.`);
+    return;
+  }
+
 
   // Find the first lesson in that course.
   const lessonsQuery = query(collection(firestore, `courses/${courseId}/lessons`), orderBy('order'), limit(1));
   const lessonsSnapshot = await getDocs(lessonsQuery);
 
-  if (lessonsSnapshot.empty) {
-     console.warn(`Course ${courseId} has no lessons. Progress document not created.`);
-     // If the first course has no lessons, we also can't start progress.
-     return;
-  }
-
-  const firstLessonId = lessonsSnapshot.docs[0].id;
-  const progressDocId = `${userId}_${courseId}`;
+  // If the first course has no lessons, we also can't start progress.
+  // Set currentLessonId to empty string to indicate no lessons available to start.
+  const firstLessonId = lessonsSnapshot.empty ? '' : lessonsSnapshot.docs[0].id;
 
   // Create the progress document.
   const progressRef = doc(firestore, `users/${userId}/progress`, progressDocId);

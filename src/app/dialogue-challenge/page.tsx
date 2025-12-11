@@ -103,7 +103,7 @@ DialogueBubble.displayName = "DialogueBubble";
 // === Main Component ===
 
 export default function DialogueChallengePage() {
-  const { user, isUserLoading, firestore } = useUser(true);
+  const { user, isUserLoading, firestore } = useUser(true); // Now includes firestore
   const { toast } = useToast();
   
   const [nilePoints, setNilePoints] = useState(0); 
@@ -125,6 +125,7 @@ export default function DialogueChallengePage() {
       setNilePoints(0); // Default to 0 if not present
     }
   }, [user]);
+
 
   const scrollToBottom = () => {
     dialogueEndRef.current?.scrollIntoView({ behavior: 'smooth' });

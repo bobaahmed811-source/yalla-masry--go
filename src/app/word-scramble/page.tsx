@@ -6,7 +6,7 @@ import { useDrag, useDrop, DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Check, ArrowLeft, Gem, Loader2 } from 'lucide-react';
+import { Check, ArrowLeft, Gem, Loader2, Lock } from 'lucide-react';
 import { useUser } from '@/firebase';
 import { doc, updateDoc, increment } from 'firebase/firestore';
 
@@ -161,6 +161,21 @@ const GameContent = () => {
       <div className="flex items-center justify-center text-white p-10 h-full">
         <Loader2 className="w-8 h-8 animate-spin text-gold-accent mr-3" />
         <p>جاري تحميل تحديات فرعونية جديدة...</p>
+      </div>
+    );
+  }
+  
+  if (!user) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-nile-dark text-white p-4 text-center">
+        <Lock className="w-16 h-16 text-gold-accent mb-6" />
+        <h1 className="text-3xl font-bold royal-title mb-4">محتوى ملكي محمي</h1>
+        <p className="text-sand-ochre mb-8 max-w-md">
+          عفواً أيها الزائر، هذا التحدي مخصص فقط لأفراد المملكة المسجلين.
+        </p>
+        <Link href="/login">
+            <Button className="cta-button text-lg px-8">تسجيل الدخول إلى المملكة</Button>
+        </Link>
       </div>
     );
   }

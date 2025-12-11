@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -173,20 +174,15 @@ export default function HomePage() {
   const [lessonsCompleted, setLessonsCompleted] = useState(0);
   const [totalLessons, setTotalLessons] = useState(0);
 
-  const userDocRef = useMemoFirebase(() => {
-    if (!user || !firestore) return null;
-    return doc(firestore, 'users', user.uid);
-  }, [user, firestore]);
-
   const progressCollectionRef = useMemoFirebase(() => {
     if (!user || !firestore) return null;
     return collection(firestore, `users/${user.uid}/progress`);
   }, [user, firestore]);
   
-  const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userDocRef);
   const { data: progresses, isLoading: isProgressLoading } = useCollection<Progress>(progressCollectionRef);
   
-  const nilePoints = userProfile?.nilePoints ?? 0;
+  // Directly use nilePoints from the useUser hook
+  const nilePoints = user?.nilePoints ?? 0;
   
   useEffect(() => {
     const fetchCourseData = async () => {
@@ -194,11 +190,23 @@ export default function HomePage() {
             let completedCount = 0;
             let totalCount = 0;
 
+            // Create a single query for all courses to get total lesson counts efficiently
+            const coursesQuery = query(collection(firestore, 'courses'));
+            const coursesSnapshot = await getDocs(coursesQuery);
+            const courseLessonCounts = new Map<string, number>();
+
+            // Asynchronously fetch lesson counts for all courses
+            const lessonCountPromises = coursesSnapshot.docs.map(async (courseDoc) => {
+                const lessonsQuery = query(collection(firestore, `courses/${courseDoc.id}/lessons`));
+                const lessonsSnapshot = await getDocs(lessonsQuery);
+                courseLessonCounts.set(courseDoc.id, lessonsSnapshot.size);
+            });
+            
+            await Promise.all(lessonCountPromises);
+
             for (const progress of progresses) {
                 completedCount += progress.completedLessons.length;
-                const lessonsQuery = query(collection(firestore, `courses/${progress.courseId}/lessons`));
-                const lessonsSnapshot = await getDocs(lessonsQuery);
-                totalCount += lessonsSnapshot.size;
+                totalCount += courseLessonCounts.get(progress.courseId) || 0;
             }
             
             setLessonsCompleted(completedCount);
@@ -276,7 +284,7 @@ export default function HomePage() {
                   </div>
                   <StatCard
                     icon={<Gem className="h-6 w-6 text-sand-ochre" />}
-                    value={isProfileLoading ? '...' : `${nilePoints}`}
+                    value={isUserLoading ? '...' : `${nilePoints}`}
                     label="نقاط النيل"
                   />
                   <StatCard
