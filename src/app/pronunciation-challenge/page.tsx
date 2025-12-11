@@ -22,6 +22,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { getSpeechAudio } from '../ai-actions';
+import { cn } from '@/lib/utils';
 
 // Dictionary for all UI texts
 const lang: Record<string, Record<string, string>> = {
@@ -82,7 +83,7 @@ const lang: Record<string, Record<string, string>> = {
 };
 
 export default function PronunciationChallengePage() {
-  const [currentLang, setCurrentLang] = useState('ar');
+  const [currentLang, setCurrentLang] = useState('en');
   const [isRecording, setIsRecording] = useState(false);
   const [userAudioUrl, setUserAudioUrl] = useState<string | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -91,7 +92,7 @@ export default function PronunciationChallengePage() {
 
   const { toast } = useToast();
   const challengePhrase = 'صباح الخير، أنا كويس، متشكر.';
-  const texts = lang[currentLang] || lang.ar;
+  const texts = lang[currentLang] || lang.en;
   const isRtl = currentLang === 'ar';
   
   useEffect(() => {
@@ -172,29 +173,37 @@ export default function PronunciationChallengePage() {
   };
 
    useEffect(() => {
+    // Set initial direction based on default language
     handleLanguageChange(currentLang);
-   }, [currentLang]);
+    // Cleanup on unmount
+    return () => {
+        if(document.documentElement) {
+            document.documentElement.dir = 'ltr'; // Or your app's ultimate default
+            document.documentElement.lang = 'en';
+        }
+    }
+   }, []);
 
   return (
-      <div className="relative flex items-center justify-center min-h-screen bg-nile-dark p-4 overflow-hidden">
+      <div className={cn("relative flex items-center justify-center min-h-screen bg-nile-dark p-4 overflow-hidden", isRtl ? "rtl" : "ltr")}>
         <div 
             className="absolute inset-0 bg-cover bg-center z-0 opacity-20"
             style={{backgroundImage: "url('https://picsum.photos/seed/hatshepsut-challenge/1200/800')"}}
             data-ai-hint="pharaoh temple"
         ></div>
 
-       <div className="fixed top-4 left-4 z-20 flex items-center gap-4">
+       <div className={cn("fixed top-4 z-20 flex items-center gap-4", isRtl ? "right-4" : "left-4")}>
         <Select onValueChange={handleLanguageChange} defaultValue={currentLang}>
           <SelectTrigger className="w-[180px] bg-gold-accent text-dark-granite border-none royal-title font-bold shadow-lg">
             <SelectValue placeholder="Language" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="ar">العربية (AR)</SelectItem>
             <SelectItem value="en">English (EN)</SelectItem>
+            <SelectItem value="ar">العربية (AR)</SelectItem>
           </SelectContent>
         </Select>
          <Link href="/" className="utility-button px-4 py-2 text-md font-bold rounded-lg flex items-center justify-center">
-            <ArrowLeft className={`${isRtl ? 'ml-2' : 'mr-2'} h-4 w-4`} />
+            <ArrowLeft className={cn("h-4 w-4", isRtl ? "ml-2" : "mr-2")} />
             <span>{texts.go_back}</span>
         </Link>
       </div>
@@ -209,7 +218,7 @@ export default function PronunciationChallengePage() {
 
         <div className="bg-nile p-8 md:p-12 rounded-xl shadow-inner border-2 border-sand-ochre/20 text-center">
           <div className="mb-8 p-4 bg-nile-dark rounded-lg border-2 border-dashed border-sand-ochre">
-            <p className="text-4xl font-extrabold text-white royal-title">
+            <p className="text-4xl font-extrabold text-white" style={{fontFamily: "'El Messiri', sans-serif"}}>
               {challengePhrase}
             </p>
           </div>
@@ -237,31 +246,32 @@ export default function PronunciationChallengePage() {
                 <Button
                     id="record-button"
                     onClick={isRecording ? stopRecording : startRecording}
-                    className={`shadow-lg w-24 h-24 rounded-full text-white text-3xl mx-auto flex items-center justify-center transition-all duration-300 transform hover:scale-110 ${isRecording ? 'bg-red-600 hover:bg-red-700 animate-pulse' : 'bg-blue-600 hover:bg-blue-700'}`}
+                    className={cn("shadow-lg w-24 h-24 rounded-full text-white text-3xl mx-auto flex items-center justify-center transition-all duration-300 transform hover:scale-110", isRecording ? 'bg-red-600 hover:bg-red-700 animate-pulse' : 'bg-blue-600 hover:bg-blue-700')}
                 >
                     {isRecording ? <StopCircle /> : <Mic />}
                 </Button>
-                 <span className="text-sm font-bold text-sand-ochre">{isRecording ? texts.stop_recording : texts.record}</span>
+                 <span className="text-sm font-bold text-sand-ochre">{isRecording ? texts.recording : texts.record}</span>
             </div>
           </div>
           
           {userAudioUrl && (
             <div className="mt-6">
-                <h3 className="text-sand-ochre font-bold mb-2">استمع لتسجيلك:</h3>
+                <h3 className="text-sand-ochre font-bold mb-2">{texts.your_turn}</h3>
                 <audio src={userAudioUrl} controls className="w-full" />
             </div>
            )}
 
-          <div className={`mt-10 flex justify-end`}>
+          <div className={cn("mt-10 flex", isRtl ? "justify-start" : "justify-end")}>
             <Button
               disabled={!userAudioUrl}
               className="cta-button px-6 py-3 text-lg rounded-full flex items-center"
               onClick={() => {
-                toast({ title: 'رائع!', description: texts.next_prompt });
+                toast({ title: 'Great!', description: texts.next_prompt });
               }}
             >
-              <span>{texts.next}</span>
+              {!isRtl && <span>{texts.next}</span>}
               {isRtl ? <ChevronLeft className="mr-2" /> : <ChevronRight className="ml-2" />}
+              {isRtl && <span>{texts.next}</span>}
             </Button>
           </div>
         </div>
