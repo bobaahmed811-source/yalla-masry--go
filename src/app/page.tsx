@@ -190,14 +190,19 @@ export default function HomePage() {
   
   useEffect(() => {
     const fetchCourseData = async () => {
-        if (progresses && progresses.length > 0 && firestore) {
-            // Assuming one course progress document per user for now
-            const currentProgress = progresses[0]; 
-            setLessonsCompleted(currentProgress.completedLessons.length);
+        if (progresses && firestore) {
+            let completedCount = 0;
+            let totalCount = 0;
 
-            const lessonsQuery = query(collection(firestore, `courses/${currentProgress.courseId}/lessons`));
-            const lessonsSnapshot = await getDocs(lessonsQuery);
-            setTotalLessons(lessonsSnapshot.size);
+            for (const progress of progresses) {
+                completedCount += progress.completedLessons.length;
+                const lessonsQuery = query(collection(firestore, `courses/${progress.courseId}/lessons`));
+                const lessonsSnapshot = await getDocs(lessonsQuery);
+                totalCount += lessonsSnapshot.size;
+            }
+            
+            setLessonsCompleted(completedCount);
+            setTotalLessons(totalCount);
         } else if (!isProgressLoading) {
             // If no progress docs, reset stats
             setLessonsCompleted(0);
@@ -463,5 +468,3 @@ export default function HomePage() {
     </div>
   );
 }
-
-    
