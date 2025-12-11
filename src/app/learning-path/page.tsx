@@ -43,7 +43,12 @@ const getStatusForLesson = (lessonId: string, progress: Progress | undefined, al
     if (currentLessonInAll && thisLesson && thisLesson.order > currentLessonInAll.order) {
         return 'locked';
     }
-    // Default to locked if logic doesn't match
+     // If the current lesson is not found, it implies course completion or an issue, so future lessons are locked.
+    if (!currentLessonInAll) {
+        return 'locked';
+    }
+
+    // Default to locked if logic doesn't match - safe fallback
     return 'locked'; 
 };
 
@@ -71,7 +76,7 @@ const CourseSection = ({ course, progress }: { course: Course, progress: Progres
 
   const { data: lessons, isLoading: isLoadingLessons, error: lessonsError } = useCollection<Lesson>(lessonsQuery);
   
-  const getIsLocked = (lessonId: string, status: string) => {
+  const getIsLocked = (status: string) => {
       if(!progress) return true;
       return status === 'locked';
   };
@@ -89,7 +94,7 @@ const CourseSection = ({ course, progress }: { course: Course, progress: Progres
       <div className="space-y-4">
         {lessons && lessons.map((lesson) => {
           const status = getStatusForLesson(lesson.id, progress, lessons);
-          const isLocked = getIsLocked(lesson.id, status);
+          const isLocked = getIsLocked(status);
           
           return (
             <Link
@@ -97,6 +102,8 @@ const CourseSection = ({ course, progress }: { course: Course, progress: Progres
               href={!isLocked ? `/learning-path/${lesson.id}?courseId=${course.id}` : '#'}
               passHref
               className={`block ${isLocked ? 'pointer-events-none' : ''}`}
+              aria-disabled={isLocked}
+              tabIndex={isLocked ? -1 : undefined}
             >
               <div
                 className={`flex items-center justify-between p-4 rounded-lg transition-all duration-300 ${
