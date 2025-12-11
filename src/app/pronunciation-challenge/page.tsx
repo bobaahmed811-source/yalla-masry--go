@@ -24,7 +24,7 @@ import Link from 'next/link';
 import { getSpeechAudio } from '../ai-actions';
 import { cn } from '@/lib/utils';
 
-// Dictionary for all UI texts, now including Spanish
+// Dictionary for all UI texts, now including Spanish and French
 const lang: Record<string, Record<string, string>> = {
   ar: {
     title: "تحديات قوة حتشبسوت الفرعونية",
@@ -106,6 +106,33 @@ const lang: Record<string, Record<string, string>> = {
     mic_error_desc: 'Por favor, asegúrate de haber dado permiso para usar el micrófono.',
     mic_unsupported_title: 'Navegador No Soportado',
     mic_unsupported_desc: 'La grabación de audio no es compatible con este navegador.',
+  },
+  fr: {
+    title: "Défis de la Puissance Pharaonique d'Hatshepsout",
+    mentor: "Écoutez le décret royal, puis déclarez votre loyauté en le répétant.",
+    instructions: 'Écoutez la phrase et répétez-la clairement pour activer votre pouvoir pharaonique.',
+    loading: "Préparation de la voix du mentor...",
+    error: 'Une erreur est survenue: Impossible de lire l\'audio.',
+    record: 'Enregistrer la Voix',
+    recording: 'Enregistrement...',
+    stop_recording: 'Arrêter l\'enregistrement',
+    next: 'Suivant',
+    go_back: 'Retour au Tableau de Bord',
+    play_audio: 'Écouter le Décret',
+    playing_audio: 'Lecture...',
+    your_turn: "C'est à votre tour !",
+    record_prompt: 'Vous pouvez enregistrer votre voix et la comparer.',
+    next_prompt: 'Excellent ! Vous passerez au prochain défi.',
+    audio_ready: 'Audio Prêt',
+    audio_ready_desc: 'Vous pouvez maintenant écouter la phrase.',
+    audio_error_title: 'Erreur Audio',
+    audio_error_desc: 'Échec de la récupération du clip audio.',
+    playback_error_title: 'Erreur de Lecture',
+    playback_error_desc: 'Nous n\'avons pas pu lire le fichier audio.',
+    mic_error_title: 'Erreur de Microphone',
+    mic_error_desc: 'Veuillez vous assurer d\'avoir donné la permission d\'utiliser le microphone.',
+    mic_unsupported_title: 'Navigateur Non Supporté',
+    mic_unsupported_desc: 'L\'enregistrement audio n\'est pas pris en charge par ce navigateur.',
   },
 };
 
@@ -228,6 +255,7 @@ export default function PronunciationChallengePage() {
             <SelectItem value="en">English (EN)</SelectItem>
             <SelectItem value="ar">العربية (AR)</SelectItem>
             <SelectItem value="es">Español (ES)</SelectItem>
+            <SelectItem value="fr">Français (FR)</SelectItem>
           </SelectContent>
         </Select>
          <Link href="/" className="utility-button px-4 py-2 text-md font-bold rounded-lg flex items-center justify-center">
@@ -307,5 +335,3 @@ export default function PronunciationChallengePage() {
     </div>
   );
 }
-
-    
