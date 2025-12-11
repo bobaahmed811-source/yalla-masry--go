@@ -71,6 +71,8 @@ const Logo = () => (
     </div>
 );
 
+const SIGNUP_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScP9wcegTMCjY_l3B2dMhlRXE3KL32j4-dbqCsio0QiBXuURA/viewform?usp=preview";
+
 
 export default function LandingPage() {
   return (
@@ -95,7 +97,7 @@ export default function LandingPage() {
             ></iframe>
           </div>
           <p className="text-2xl md:text-3xl font-bold mb-4">🔥 توقفي عن دراسة العربية، وابدئي بعيشها.</p>
-          <p className="text-lg md:text-xl mb-6">هذا هو التحديث الذي سيجلب لنا الرابط.</p>
+          <p className="text-lg md:text-xl mb-6">انضمي الآن وابدئي رحلتك نحو الطلاقة.</p>
           <p className="text-gray-300 max-w-3xl mx-auto mb-10">
             أتقني اللهجة المصرية عبر الإنترنت مع معلمات متخصصات في بيئة آمنة ومخصصة للنساء والأطفال. دروس خصوصية فردية ونظام تحديات "حتشبسوت" الحصري.
           </p>
@@ -111,7 +113,7 @@ export default function LandingPage() {
                     <li>✅ مواد تعليمية حصرية وثرية.</li>
                 </ul>
                 <Button asChild className="cta-button w-full mt-6 text-lg">
-                    <a href="https://docs.google.com/forms/d/e/1FAIpQLScP9wcegTMCjY_l3B2dMhlRXE3KL32j4-dbqCsio0QiBXuURA/viewform?usp=preview" target="_blank" rel="noopener noreferrer">
+                    <a href={SIGNUP_FORM_URL} target="_blank" rel="noopener noreferrer">
                         احجزي جلستك الفرعونية المجانية الآن!
                     </a>
                 </Button>
@@ -191,7 +193,7 @@ export default function LandingPage() {
                           </CardContent>
                           <div className="p-6 pt-0">
                                <Button asChild className="cta-button w-full mt-4 text-lg">
-                                  <a href="https://docs.google.com/forms/d/e/1FAIpQLScP9wcegTMCjY_l3B2dMhlRXE3KL32j4-dbqCsio0QiBXuURA/viewform?usp=preview" target="_blank" rel="noopener noreferrer">
+                                  <a href={SIGNUP_FORM_URL} target="_blank" rel="noopener noreferrer">
                                       اختاري هذه الباقة
                                   </a>
                               </Button>
@@ -234,7 +236,7 @@ export default function LandingPage() {
               <div className="mt-10">
                   <p className="text-2xl font-bold text-white mb-4">✨ رحلتك لإتقان اللهجة المصرية تبدأ من هنا!</p>
                   <Button asChild className="cta-button text-xl px-8 py-6 rounded-full">
-                      <a href="https://docs.google.com/forms/d/e/1FAIpQLScP9wcegTMCjY_l3B2dMhlRXE3KL32j4-dbqCsio0QiBXuURA/viewform?usp=preview" target="_blank" rel="noopener noreferrer">🚀 احجزي جلستك المجانية الآن</a>
+                      <a href={SIGNUP_FORM_URL} target="_blank" rel="noopener noreferrer">🚀 احجزي جلستك المجانية الآن</a>
                   </Button>
               </div>
               <div className="mt-12 text-sm text-gray-500">

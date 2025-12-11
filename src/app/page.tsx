@@ -40,7 +40,8 @@ import {
   Baby,
   BarChart3,
   Target,
-  MessagesSquare, // Import the chat icon
+  MessagesSquare,
+  Globe, // New Icon
 } from 'lucide-react';
 import { initiateSignOut } from '@/firebase/non-blocking-login';
 import { useToast } from '@/hooks/use-toast';
@@ -470,18 +471,24 @@ export default function HomePage() {
                 <Card className="dashboard-card lg:col-span-2">
                   <CardHeader>
                     <CardTitle className="royal-title text-2xl">
-                        التواصل والتفاعل
+                        التواصل والتوسع
                     </CardTitle>
                     <CardDescription className="text-sand-ochre">
-                      تواصلي مع باقي أعضاء المملكة.
+                      تواصلي مع باقي أعضاء المملكة واستكشفي آفاقًا جديدة.
                     </CardDescription>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <ChallengeLink
                       href="/community-chat"
                       title="ساحة الحوار الكبرى"
                       description="دردشة عامة مع جميع طلاب المملكة."
                       icon={<MessagesSquare />}
+                    />
+                    <ChallengeLink
+                      href="/gulf-gateway"
+                      title="بوابة الخليج"
+                      description="قريباً: محتوى متخصص باللهجات الخليجية."
+                      icon={<Globe />}
                     />
                   </CardContent>
                 </Card>
