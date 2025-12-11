@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
@@ -266,7 +267,7 @@ const GameContent = () => {
   );
 };
 
-const DraggableWord = ({ id, word, index, source, moveWord, isLocked } : { id: any, word: string, index: number, source: 'shuffled' | 'arranged', moveWord: Function, isLocked: boolean }) => {
+const DraggableWord = ({ id, word, index, source, moveWord, isLocked } : { id: any, word: string, index: number, source: 'shuffled' | 'arranged', moveWord: Function, isLocked: boolean | null }) => {
     const ref = useRef<HTMLDivElement>(null);
 
     const [, drop] = useDrop({
@@ -317,3 +318,5 @@ const WordScramblePage = () => {
 };
 
 export default WordScramblePage;
+
+    
