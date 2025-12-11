@@ -101,11 +101,8 @@ export default function StorePage() {
         title: '✅ تم استلام طلبك بنجاح!',
         body: successMessageBody,
     });
-    toast({
-        title: "تم تسجيل طلبك بنجاح!",
-        description: "سيتم التواصل معك قريباً لتأكيد الدفع.",
-    });
-
+    
+    // Clear the form and reset state
     if (isGift) setGiftEmail('');
     setIsSubmitting(false);
   };

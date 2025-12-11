@@ -121,7 +121,7 @@ const GameContent = () => {
       setMessage('حاول مجدداً! ترتيب الكلمات غير صحيح.');
       // Reset the words for another try after a delay
       setTimeout(() => {
-        setShuffledWords(shuffleWords(correctSentence));
+        setShuffledWords(prevShuffled => [...prevShuffled, ...arrangedWords]);
         setArrangedWords([]);
         setIsCorrect(null);
         setMessage('');
@@ -304,6 +304,3 @@ const WordScramblePage = () => {
 };
 
 export default WordScramblePage;
-
-    
-    

@@ -123,13 +123,10 @@ export default function BookingPage() {
     try {
         await addDocumentNonBlocking(collection(firestore, purchasesCollectionPath), purchaseData);
         setBookingStatus('confirmed');
-        toast({
-            title: "✅ تم تسجيل طلب الحجز بنجاح",
-            description: "سيتم التواصل معكِ من قبل الإدارة لتأكيد الدفع والموعد.",
-        });
     } catch(error) {
         console.error("Booking error: ", error);
         toast({ variant: 'destructive', title: 'خطأ في الحجز', description: 'لم نتمكن من تسجيل طلب الحجز. يرجى المحاولة مرة أخرى.' });
+        setBookingStatus('idle'); // Go back to selection on error
     } finally {
         setIsSubmitting(false);
     }
@@ -222,7 +219,7 @@ export default function BookingPage() {
                             تغيير الموعد
                         </Button>
                         <Button onClick={handleConfirmBooking} className="cta-button flex-1" disabled={isSubmitting || !user}>
-                          {isSubmitting ? 'جاري الإرسال...' : 'تأكيد الحجز وطلب الدفع'}
+                          {isSubmitting ? <><Loader2 className="animate-spin ml-2"/> جاري الإرسال...</> : 'تأكيد الحجز وطلب الدفع'}
                         </Button>
                     </div>
                 </CardContent>
