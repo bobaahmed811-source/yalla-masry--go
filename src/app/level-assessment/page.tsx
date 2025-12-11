@@ -6,10 +6,11 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { BarChart3, Check } from 'lucide-react';
+import { BarChart3, Check, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useUser } from '@/firebase';
+import { doc, updateDoc } from 'firebase/firestore';
 
 const assessmentData = {
   title: "ما هو مستواك الحالي في اللهجة المصرية؟",
@@ -23,11 +24,12 @@ const assessmentData = {
 
 export default function LevelAssessmentPage() {
   const [selectedValue, setSelectedValue] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
-  const { user } = useUser();
+  const { user, firestore, isUserLoading } = useUser(true);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!selectedValue) {
       toast({
         variant: 'destructive',
@@ -37,24 +39,56 @@ export default function LevelAssessmentPage() {
       return;
     }
     
-    // In a real app, this value would be saved to the user's profile.
-    // For now, we'll just show an AI-powered toast and redirect.
+    if (!user || !firestore) {
+         toast({
+            variant: 'destructive',
+            title: 'خطأ',
+            description: 'يجب تسجيل الدخول لحفظ المستوى. جاري إعادة التحميل...'
+        });
+        return;
+    }
 
-    const levelLabel = assessmentData.options.find(o => o.value === selectedValue)?.label || "المحدد";
-    const aiMessage = {
-        beginner: `رائع! كل رحلة عظيمة تبدأ بخطوة. مسار التعلم الملكي هو أفضل بداية لك.`,
-        intermediate: `ممتاز! أنت في منتصف الطريق. تحديات حوارات السوق ستصقل مهاراتك.`,
-        advanced: `مستوى فرعوني متقدم! أنت جاهز للغوص في نقاشات أعمق في واحة القرآن والمتحف الافتراضي.`
-    }[selectedValue] || `لقد تم تسجيل مستواك كـ "${levelLabel}". سنقوم بتخصيص التجربة لك!`;
-
-    toast({
-      title: 'تم تحديد مستواك!',
-      description: aiMessage,
-    });
+    setIsSubmitting(true);
     
-    // Redirect to the main dashboard
-    router.push('/');
+    try {
+        const userDocRef = doc(firestore, 'users', user.uid);
+        await updateDoc(userDocRef, {
+            level: selectedValue
+        });
+
+        const levelLabel = assessmentData.options.find(o => o.value === selectedValue)?.label || "المحدد";
+        const aiMessage = {
+            beginner: `رائع! كل رحلة عظيمة تبدأ بخطوة. مسار التعلم الملكي هو أفضل بداية لك.`,
+            intermediate: `ممتاز! أنت في منتصف الطريق. تحديات حوارات السوق ستصقل مهاراتك.`,
+            advanced: `مستوى فرعوني متقدم! أنت جاهز للغوص في نقاشات أعمق في واحة القرآن والمتحف الافتراضي.`
+        }[selectedValue] || `لقد تم تسجيل مستواك كـ "${levelLabel}". سنقوم بتخصيص التجربة لك!`;
+
+        toast({
+          title: 'تم تحديد مستواك!',
+          description: aiMessage,
+        });
+        
+        router.push('/');
+
+    } catch (error) {
+        console.error("Error updating level:", error);
+        toast({
+            variant: 'destructive',
+            title: 'فشل حفظ المستوى',
+            description: 'حدث خطأ أثناء حفظ مستواك. يرجى المحاولة مرة أخرى.'
+        });
+    } finally {
+        setIsSubmitting(false);
+    }
   };
+  
+    if (isUserLoading) {
+      return (
+        <div className="flex items-center justify-center min-h-screen bg-nile-dark p-4">
+          <Loader2 className="h-12 w-12 text-gold-accent animate-spin" />
+        </div>
+      );
+    }
   
     if (!user) {
     return (
@@ -121,10 +155,10 @@ export default function LevelAssessmentPage() {
           </Link>
           <Button 
             onClick={handleSubmit} 
-            disabled={!selectedValue} 
+            disabled={!selectedValue || isSubmitting} 
             className="cta-button text-lg px-8"
           >
-            تأكيد المستوى والانطلاق
+            {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin"/> : 'تأكيد المستوى والانطلاق'}
           </Button>
         </footer>
       </div>
