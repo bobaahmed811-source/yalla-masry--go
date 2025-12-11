@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -6,7 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useFirestore, useCollection, useUser, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
-import { Map, CheckCircle, ArrowLeft, Lock, Loader2 } from 'lucide-react';
+import { Map, CheckCircle, ArrowLeft, Lock, Loader2, PlayCircle } from 'lucide-react';
 
 // Define types for Firestore documents
 interface Course {
@@ -37,19 +36,8 @@ const getStatusForLesson = (lessonId: string, progress: Progress | undefined, al
     if (progress.currentLessonId === lessonId) {
         return 'current';
     }
-    // Check if lesson is in the future based on order
-    const currentLessonInAll = allLessons.find(l => l.id === progress.currentLessonId);
-    const thisLesson = allLessons.find(l => l.id === lessonId);
-    if (currentLessonInAll && thisLesson && thisLesson.order > currentLessonInAll.order) {
-        return 'locked';
-    }
-     // If the current lesson is not found, it implies course completion or an issue, so future lessons are locked.
-    if (!currentLessonInAll) {
-        return 'locked';
-    }
-
-    // Default to locked if logic doesn't match - safe fallback
-    return 'locked'; 
+     // If a lesson is neither completed nor current, it must be locked.
+    return 'locked';
 };
 
 
@@ -58,7 +46,7 @@ const getStatusIcon = (status: string) => {
     case 'completed':
       return <CheckCircle className="text-green-400" />;
     case 'current':
-      return <ArrowLeft className="text-yellow-400 animate-pulse" />;
+      return <PlayCircle className="text-yellow-400 animate-pulse" />;
     case 'locked':
       return <Lock className="text-gray-500" />;
     default:
@@ -77,8 +65,9 @@ const CourseSection = ({ course, progress }: { course: Course, progress: Progres
   const { data: lessons, isLoading: isLoadingLessons, error: lessonsError } = useCollection<Lesson>(lessonsQuery);
   
   const getIsLocked = (status: string) => {
-      if(!progress) return true;
-      return status === 'locked';
+      // A lesson is accessible if it's current or completed. It's locked otherwise.
+      // We also check for `progress` existence. If there's no progress doc, all are locked.
+      return !progress || (status !== 'current' && status !== 'completed');
   };
 
   return (
@@ -139,7 +128,7 @@ export default function LearningPathPage() {
 
   const coursesQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return collection(firestore, 'courses');
+    return query(collection(firestore, 'courses'), orderBy('title')); // Ensure consistent order
   }, [firestore]);
 
   // Fetch progress for the current user. A user can be enrolled in multiple courses.

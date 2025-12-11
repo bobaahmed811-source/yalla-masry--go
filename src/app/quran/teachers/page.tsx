@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 import { ArrowRight, GraduationCap, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface Instructor {
   id: string;
@@ -19,7 +20,7 @@ interface Instructor {
 const TeacherCard = ({ teacher }: { teacher: Instructor }) => (
   <div className="dashboard-card text-white p-6 rounded-2xl shadow-lg text-center transform transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:border-gold-accent flex flex-col">
     <div className="relative w-32 h-32 mx-auto mb-4">
-      <img src={teacher.photo || `https://picsum.photos/seed/${teacher.id}/200/200`} alt={`صورة ${teacher.teacherName}`} className="rounded-full w-full h-full object-cover border-4 border-gold-accent" />
+      <img src={teacher.photo || `https://picsum.photos/seed/${teacher.id}/200/200`} alt={`صورة ${teacher.teacherName}`} className="rounded-full w-full h-full object-cover border-4 border-gold-accent" data-ai-hint="teacher portrait" />
       <span 
         className={`absolute bottom-1 right-1 block h-5 w-5 rounded-full border-2 border-nile-dark ${teacher.status === 'Active' ? 'bg-green-400' : 'bg-gray-500'}`}
         title={teacher.status === 'Active' ? 'متاح' : 'غير متاح'}
@@ -30,12 +31,13 @@ const TeacherCard = ({ teacher }: { teacher: Instructor }) => (
     {teacher.lessonPrice && (
       <div className="text-lg font-bold text-white mb-4 bg-nile-dark/30 py-1 px-3 rounded-full self-center">${teacher.lessonPrice} / ساعة</div>
     )}
-    <button
+    <Button
       disabled={teacher.status !== 'Active'}
       className="w-full mt-auto cta-button"
+      asChild
     >
-      {teacher.status === 'Active' ? 'احجز الآن' : 'غير متاح'}
-    </button>
+      <Link href="/booking">{teacher.status === 'Active' ? 'احجز الآن' : 'غير متاح'}</Link>
+    </Button>
   </div>
 );
 
@@ -78,17 +80,16 @@ export default function TeachersPage() {
         )}
         {error && <p className="text-center text-lg text-red-400">حدث خطأ أثناء تحميل المعلمين: {error.message}</p>}
         
-        {teachers && (
+        {teachers && teachers.length > 0 ? (
            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {teachers.map(teacher => (
               <TeacherCard key={teacher.id} teacher={teacher} />
             ))}
           </div>
-        )}
-
-        {!isLoading && teachers?.length === 0 && (
+        ): !isLoading && (
             <p className="text-center text-sand-ochre py-10">لا يوجد معلمون متخصصون في القرآن مسجلون حالياً.</p>
         )}
+
       </main>
 
       <footer className="mt-auto pt-12 text-center text-gray-400 text-sm">
@@ -101,5 +102,3 @@ export default function TeachersPage() {
     </div>
   );
 }
-
-    

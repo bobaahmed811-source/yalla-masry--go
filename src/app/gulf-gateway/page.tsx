@@ -156,7 +156,7 @@ export default function NoufsJourneyPage() {
 
         {!isLoading && challenges && (
           <div className="space-y-12">
-            {STOPS.map((stop, index) => {
+            {STOPS.map((stop) => {
                 const stopChallenges = challengesByStop[stop.category] || [];
                 return (
                     <section key={stop.id}>
@@ -185,6 +185,15 @@ export default function NoufsJourneyPage() {
                 )
             })}
           </div>
+        )}
+         {!isLoading && (!challenges || challenges.length === 0) && (
+            <div className="dashboard-card p-8 rounded-lg text-center">
+                <p className="text-xl text-sand-ochre">رحلة نوف لم تبدأ بعد!</p>
+                <p className="text-gray-300 mt-2">يبدو أنه لا توجد تحديات في "ديوان الإدارة". اذهب وأضف بعض التحديات لتبدأ مغامرة نوف.</p>
+                <Link href="/admin">
+                    <Button className="cta-button mt-4">اذهب إلى ديوان الإدارة</Button>
+                </Link>
+            </div>
         )}
       </main>
 
