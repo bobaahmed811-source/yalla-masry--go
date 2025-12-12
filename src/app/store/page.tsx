@@ -4,12 +4,23 @@
 import React, { useEffect, useState } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { collection, query, where } from 'firebase/firestore';
+import { collection, query, where, doc, updateDoc, increment, getDoc, runTransaction } from 'firebase/firestore';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Gift, ShoppingCart, History, ArrowLeft, Loader2, CheckCircle, ScrollText, Ankh } from 'lucide-react';
+import { Gift, ShoppingCart, History, ArrowLeft, Loader2, CheckCircle, ScrollText, Ankh, Gem } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 // --- Type Definitions ---
 type PaymentMessage = {
@@ -33,7 +44,8 @@ interface Product {
     id: string;
     name: string;
     description: string;
-    price: number;
+    price?: number;
+    nilePointsPrice?: number;
     icon: 'ScrollText' | 'Ankh';
 }
 
@@ -128,6 +140,59 @@ export default function StorePage() {
     if (isGift) setGiftEmail('');
     setIsSubmitting(false);
   };
+  
+  const buyWithNilePoints = async (product: Product) => {
+    if (!firestore || !user || !product.nilePointsPrice) return;
+
+    setIsSubmitting(true);
+    const userRef = doc(firestore, 'users', user.uid);
+    const pointsCost = product.nilePointsPrice;
+
+    try {
+        await runTransaction(firestore, async (transaction) => {
+            const userDoc = await transaction.get(userRef);
+            if (!userDoc.exists()) {
+                throw "User document does not exist!";
+            }
+
+            const currentPoints = userDoc.data().nilePoints || 0;
+            if (currentPoints < pointsCost) {
+                throw `ليس لديك نقاط نيل كافية! تحتاج إلى ${pointsCost} نقطة.`;
+            }
+
+            const newPoints = currentPoints - pointsCost;
+            transaction.update(userRef, { nilePoints: newPoints });
+
+            const purchaseData = {
+                userId: user.uid,
+                productId: product.id,
+                productName: product.name,
+                price: 0, // No real money involved
+                nilePointsPrice: pointsCost,
+                purchaseDate: new Date().toISOString(),
+                status: 'Completed' as const,
+                isGift: false,
+            };
+            const newPurchaseRef = doc(collection(firestore, purchasesCollectionPath));
+            transaction.set(newPurchaseRef, purchaseData);
+        });
+        
+        toast({
+            title: '🎉 تهانينا!',
+            description: `لقد اشتريت "${product.name}" بنجاح باستخدام نقاط النيل.`,
+        });
+
+    } catch (error: any) {
+        toast({
+            variant: 'destructive',
+            title: 'فشل الشراء',
+            description: typeof error === 'string' ? error : error.message || "حدث خطأ أثناء محاولة الشراء بنقاط النيل.",
+        });
+    } finally {
+        setIsSubmitting(false);
+    }
+};
+
 
   const getStatusChip = (status: Purchase['status']) => {
     switch (status) {
@@ -202,12 +267,42 @@ export default function StorePage() {
                                     <Icon className="w-20 h-20 text-gold-accent mb-4"/>
                                     <h3 className="text-2xl font-bold royal-title mb-3">{product.name}</h3>
                                     <p className="text-sand-ochre mb-4 flex-grow">{product.description}</p>
-                                    <div className="flex justify-between items-center mt-6 w-full">
-                                    <span className="text-4xl font-extrabold text-white">${product.price}</span>
-                                    <Button onClick={() => buyProduct(product)} disabled={isSubmitting || !user} className="cta-button">
-                                        {isSubmitting ? <Loader2 className="animate-spin"/> : 'اطلب الآن'}
-                                    </Button>
+                                    
+                                    <div className="w-full mt-6 space-y-4">
+                                        {product.price && (
+                                            <div className="flex justify-between items-center bg-nile-dark/30 p-3 rounded-lg">
+                                                <span className="text-3xl font-extrabold text-white">${product.price}</span>
+                                                <Button onClick={() => buyProduct(product)} disabled={isSubmitting || !user} className="cta-button">
+                                                    {isSubmitting ? <Loader2 className="animate-spin"/> : 'اطلب الآن'}
+                                                </Button>
+                                            </div>
+                                        )}
+                                        {product.nilePointsPrice && (
+                                            <div className="flex justify-between items-center bg-nile-dark/30 p-3 rounded-lg">
+                                                 <span className="text-2xl font-extrabold text-white flex items-center gap-2">{product.nilePointsPrice} <Gem className="w-6 h-6 text-gold-accent"/></span>
+                                                <AlertDialog>
+                                                    <AlertDialogTrigger asChild>
+                                                         <Button disabled={isSubmitting || !user || (user.nilePoints || 0) < product.nilePointsPrice} className="utility-button">
+                                                            {isSubmitting ? <Loader2 className="animate-spin"/> : 'شراء بالنقاط'}
+                                                        </Button>
+                                                    </AlertDialogTrigger>
+                                                    <AlertDialogContent className="dashboard-card text-white">
+                                                        <AlertDialogHeader>
+                                                            <AlertDialogTitle>تأكيد الشراء بنقاط النيل</AlertDialogTitle>
+                                                            <AlertDialogDescription className="text-sand-ochre">
+                                                                هل أنت متأكد من رغبتك في شراء "{product.name}" مقابل {product.nilePointsPrice} نقطة نيل؟ سيتم خصم النقاط من رصيدك فوراً.
+                                                            </AlertDialogDescription>
+                                                        </AlertDialogHeader>
+                                                        <AlertDialogFooter>
+                                                            <AlertDialogCancel className="utility-button">إلغاء</AlertDialogCancel>
+                                                            <AlertDialogAction onClick={() => buyWithNilePoints(product)} className="cta-button">تأكيد الشراء</AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
+                                            </div>
+                                        )}
                                     </div>
+
                                 </div>
                             );
                         })}
@@ -235,7 +330,7 @@ export default function StorePage() {
                         <div>
                             <label htmlFor="gift_product" className="font-bold text-sand-ochre">اختر الهدية:</label>
                              <select id="gift_product" value={giftProduct} onChange={(e) => setGiftProduct(e.target.value)} className="w-full p-2 mt-1 border-2 bg-nile-dark border-sand-ochre/50 rounded-lg focus:ring-gold-accent focus:border-gold-accent text-white">
-                                {products?.map(p => <option key={p.id} value={p.id}>{p.name} (${p.price})</option>)}
+                                {products?.filter(p => p.price).map(p => <option key={p.id} value={p.id}>{p.name} (${p.price})</option>)}
                              </select>
                         </div>
                         <Button onClick={handleSendGift} disabled={isSubmitting || !user} className="w-full cta-button text-lg">
@@ -260,9 +355,9 @@ export default function StorePage() {
                                         <p className="text-sm text-gray-400">{new Date(p.purchaseDate).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric'})}</p>
                                          {p.isGift && <p className="text-xs text-pink-400 font-semibold"> (هدية إلى: {p.recipientEmail})</p>}
                                     </div>
-                                    <p className="text-lg font-bold text-white text-center">${p.price}</p>
+                                    <p className="text-lg font-bold text-white text-center">{p.price ? `$${p.price}`: <span className="flex items-center justify-center gap-2">{(p as any).nilePointsPrice} <Gem className="w-5 h-5 text-gold-accent"/></span>}</p>
                                     <div className="text-center">
-                                       <span className={`px-3 py-1 text-sm font-semibold rounded-full ${getStatusChip(p.status)}`}>{p.status === 'Awaiting Payment' ? 'بانتظار الدفع' : p.status}</span>
+                                       <span className={`px-3 py-1 text-sm font-semibold rounded-full ${getStatusChip(p.status)}`}>{p.status === 'Awaiting Payment' ? 'بانتظار الدفع' : p.status === 'Completed' ? 'مكتمل' : p.status}</span>
                                     </div>
                                 </div>
                             ))}
@@ -307,4 +402,5 @@ style.innerHTML = `
 }
 `;
 document.head.appendChild(style);
+
     

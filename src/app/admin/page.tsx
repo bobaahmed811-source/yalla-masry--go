@@ -50,7 +50,8 @@ interface Product {
     id: string;
     name: string;
     description: string;
-    price: number;
+    price?: number;
+    nilePointsPrice?: number;
     icon: string;
 }
 interface Book {
@@ -143,8 +144,11 @@ const AdminDashboardPage = () => {
 
   // --- Generic Handlers ---
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setCurrentState((prev: any) => ({ ...prev, [name]: (e.target.type === 'number') ? Number(value) : value }));
+    const { name, value, type } = e.target;
+    setCurrentState((prev: any) => ({ 
+        ...prev, 
+        [name]: type === 'number' ? (value === '' ? '' : Number(value)) : value 
+    }));
   };
     
   const handleSelectChange = (name: string, value: string) => {
@@ -165,7 +169,7 @@ const AdminDashboardPage = () => {
   const handleSave = async (collectionPath: string, data: any, requiredFields: string[], type: keyof typeof dialogState) => {
     if (!firestore) return;
 
-    if (requiredFields.some(field => !data[field] && data[field] !== 0)) { // Allow 0 as a valid value for price/order
+    if (requiredFields.some(field => !data[field] && data[field] !== 0)) { // Allow 0 as a valid value
       toast({ variant: 'destructive', title: 'خطأ', description: 'الرجاء ملء جميع الحقول المطلوبة.' });
       return;
     }
@@ -205,7 +209,19 @@ const AdminDashboardPage = () => {
   // --- Specific Save Handlers ---
   const handleSaveInstructor = () => handleSave('instructors', currentState, ['teacherName', 'email', 'shortBio', 'lessonPrice'], 'instructor');
   const handleSaveCourse = () => handleSave('courses', currentState, ['title', 'description'], 'course');
-  const handleSaveProduct = () => handleSave('products', currentState, ['name', 'description', 'price', 'icon'], 'product');
+  const handleSaveProduct = () => {
+    if (currentState.price === '' || currentState.price === undefined) {
+        delete currentState.price;
+    }
+    if (currentState.nilePointsPrice === '' || currentState.nilePointsPrice === undefined) {
+        delete currentState.nilePointsPrice;
+    }
+    if (!currentState.price && !currentState.nilePointsPrice) {
+        toast({ variant: 'destructive', title: 'خطأ', description: 'يجب تحديد سعر أو سعر بنقاط النيل على الأقل.' });
+        return;
+    }
+    handleSave('products', currentState, ['name', 'description', 'icon'], 'product');
+  }
   const handleSaveBook = () => handleSave('books', currentState, ['title', 'author', 'category'], 'book');
   const handleSaveHadith = () => handleSave('hadiths', currentState, ['text', 'source', 'topic'], 'hadith');
   const handleSavePhrase = () => handleSave('phrases', currentState, ['category', 'text', 'translation'], 'phrase');
@@ -276,7 +292,8 @@ const AdminDashboardPage = () => {
                 <div className="grid gap-4 py-4">
                     <Input name="name" placeholder="اسم المنتج" value={currentState.name || ''} onChange={handleInputChange} className="bg-nile-dark border-sand-ochre text-white" />
                     <Textarea name="description" placeholder="وصف المنتج" value={currentState.description || ''} onChange={handleInputChange} className="bg-nile-dark border-sand-ochre text-white" />
-                    <Input name="price" type="number" placeholder="السعر" value={currentState.price || ''} onChange={handleInputChange} className="bg-nile-dark border-sand-ochre text-white" />
+                    <Input name="price" type="number" placeholder="السعر (بالدولار)" value={currentState.price || ''} onChange={handleInputChange} className="bg-nile-dark border-sand-ochre text-white" />
+                    <Input name="nilePointsPrice" type="number" placeholder="السعر بنقاط النيل" value={currentState.nilePointsPrice || ''} onChange={handleInputChange} className="bg-nile-dark border-sand-ochre text-white" />
                     <Input name="icon" placeholder="أيقونة (مثل ScrollText)" value={currentState.icon || ''} onChange={handleInputChange} className="bg-nile-dark border-sand-ochre text-white" />
                 </div>
                 <DialogFooter><DialogClose asChild><Button variant="outline" className="utility-button">إلغاء</Button></DialogClose><Button onClick={handleSaveProduct} disabled={isSubmitting} className="cta-button">{isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'حفظ'}</Button></DialogFooter>
