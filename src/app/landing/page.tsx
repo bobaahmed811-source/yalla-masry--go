@@ -227,11 +227,11 @@ export default function LandingPage() {
           <div className="max-w-4xl mx-auto px-4 text-center">
               <h2 className="text-3xl md:text-4xl font-bold royal-title mb-8">📞 تواصلي معنا</h2>
               <div className="space-y-4 text-lg text-sand-ochre">
-                  <p>📧 <strong>البريد الإلكتروني:</strong> your-email@yallamasry.com</p>
-                  <p>💬 <strong>واتساب:</strong> +20 123 456 7890</p>
-                  <p>📱 <strong>انستجرام:</strong> @YallaMasryAcademy</p>
+                  <p>📧 <strong>البريد الإلكتروني:</strong> info@talkmasry.com</p>
+                  <p>💬 <strong>واتساب:</strong> +20 XXX XXX XXXX</p>
+                  <p>📱 <strong>انستجرام:</strong> @talkmasryacademy</p>
                   <p>🎧 <strong>ديسكورد:</strong> <a href="#" className="underline hover:text-gold-accent">Yalla Masry Community</a></p>
-                  <p>🎥 <strong>يوتيوب:</strong> Yalla Masry Academy</p>
+                  <p>🎥 **يوتيوب:** Talk Masry Academy</p>
               </div>
               <div className="mt-10">
                   <p className="text-2xl font-bold text-white mb-4">✨ رحلتك لإتقان اللهجة المصرية تبدأ من هنا!</p>
