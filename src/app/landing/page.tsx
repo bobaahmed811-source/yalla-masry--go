@@ -230,6 +230,7 @@ export default function LandingPage() {
                   <p>📧 <strong>البريد الإلكتروني:</strong> your-email@yallamasry.com</p>
                   <p>💬 <strong>واتساب:</strong> +20 123 456 7890</p>
                   <p>📱 <strong>انستجرام:</strong> @YallaMasryAcademy</p>
+                  <p>🎧 <strong>ديسكورد:</strong> <a href="#" className="underline hover:text-gold-accent">Yalla Masry Community</a></p>
                   <p>🎥 <strong>يوتيوب:</strong> Yalla Masry Academy</p>
               </div>
               <div className="mt-10">
