@@ -17,8 +17,6 @@ export async function getComicDialog(values: z.infer<typeof ComicDialogueInputSc
   try {
     const result = await getComicDialogueFlow(values);
     return { success: true, dialogue: result.dialogue };
-    // await new Promise(resolve => setTimeout(resolve, 500));
-    // return { success: true, dialogue: ['الحوار معطل مؤقتاً', 'سيتم تفعيله قريباً', 'شكراً لتفهمكم'] };
   } catch (e: any) {
     console.error("Error in getComicDialog action:", e);
     return { error: "Failed to get dialogue from the AI. " + (e.message || "Please try again later.") };

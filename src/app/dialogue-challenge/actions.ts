@@ -15,8 +15,6 @@ export async function getDialogueEvaluation(values: z.infer<typeof DialogueEvalu
   try {
     const result = await getDialogueEvaluationFlow(values);
     return { success: result };
-    //  await new Promise(resolve => setTimeout(resolve, 500));
-    //  return { success: { score: 10, feedback: "ميزة التقييم معطلة مؤقتاً، ولكن عمل جيد!", isPositive: true } };
   } catch (e: any) {
     console.error("Error in getDialogueEvaluation action:", e);
     return { error: "Failed to get evaluation from the AI. " + (e.message || "Please try again later.") };
