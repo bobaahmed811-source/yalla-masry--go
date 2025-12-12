@@ -188,7 +188,7 @@ export default function LearningPathPage() {
           href="/"
           className="utility-button px-6 py-2 text-md font-bold rounded-lg flex items-center justify-center mx-auto w-fit"
         >
-          <ArrowRight className="ml-2 h-4 w-4" />
+          <ArrowLeft className="ml-2 h-4 w-4" />
           <span>العودة للوحة التحكم</span>
         </Link>
         <p className="mt-4">أكاديمية يلا مصري © 2024</p>
