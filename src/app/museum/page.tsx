@@ -40,10 +40,10 @@ export default function MuseumPage() {
         isDragging: false,
         lon: 0,
         lat: 0,
-        onMouseDownMouseX: 0,
-        onMouseDownMouseY: 0,
-        onMouseDownLon: 0,
-        onMouseDownLat: 0,
+        onPointerDownPointerX: 0,
+        onPointerDownPointerY: 0,
+        onPointerDownLon: 0,
+        onPointerDownLat: 0,
         
         forwardVector: new THREE.Vector3(0, 0, -1),
         rightVector: new THREE.Vector3(1, 0, 0),
@@ -321,48 +321,26 @@ export default function MuseumPage() {
             alertMessage('بدأ التجول! استخدمي الماوس أو اللمس للدوران والنظر حولكِ.', 'success');
         };
 
-        const onMouseDown = (event: MouseEvent) => {
+        const onPointerDown = (event: PointerEvent) => {
             if (state.isBlocked || state.isReportVisible) return;
             event.preventDefault();
             state.isDragging = true;
-            state.onMouseDownMouseX = event.clientX;
-            state.onMouseDownMouseY = event.clientY;
-            state.onMouseDownLon = state.lon;
-            state.onMouseDownLat = state.lat;
-        };
-        const onMouseMove = (event: MouseEvent) => {
-            if (state.isBlocked || state.isReportVisible || !state.isDragging) return;
-            event.preventDefault();
-            const deltaX = event.clientX - state.onMouseDownMouseX;
-            const deltaY = event.clientY - state.onMouseDownMouseY;
-            state.lon = state.onMouseDownLon - deltaX * 0.1;
-            state.lat = Math.max(-85, Math.min(85, state.onMouseDownLat - deltaY * 0.1));
-        };
-        const onMouseUp = () => {
-            if (state.isBlocked || state.isReportVisible) return;
-            state.isDragging = false;
+            state.onPointerDownPointerX = event.clientX;
+            state.onPointerDownPointerY = event.clientY;
+            state.onPointerDownLon = state.lon;
+            state.onPointerDownLat = state.lat;
         };
 
-        const onTouchStart = (event: TouchEvent) => {
-            if (state.isBlocked || state.isReportVisible || event.touches.length !== 1) return;
+        const onPointerMove = (event: PointerEvent) => {
+            if (state.isBlocked || state.isReportVisible || !state.isDragging) return;
             event.preventDefault();
-            state.isDragging = true;
-            const touch = event.touches[0];
-            state.onMouseDownMouseX = touch.clientX;
-            state.onMouseDownMouseY = touch.clientY;
-            state.onMouseDownLon = state.lon;
-            state.onMouseDownLat = state.lat;
+            const deltaX = event.clientX - state.onPointerDownPointerX;
+            const deltaY = event.clientY - state.onPointerDownPointerY;
+            state.lon = state.onPointerDownLon - deltaX * 0.1;
+            state.lat = Math.max(-85, Math.min(85, state.onPointerDownLat - deltaY * 0.1));
         };
-        const onTouchMove = (event: TouchEvent) => {
-            if (state.isBlocked || state.isReportVisible || !state.isDragging || event.touches.length !== 1) return;
-            event.preventDefault();
-            const touch = event.touches[0];
-            const deltaX = touch.clientX - state.onMouseDownMouseX;
-            const deltaY = touch.clientY - state.onMouseDownMouseY;
-            state.lon = state.onMouseDownLon - deltaX * 0.2;
-            state.lat = Math.max(-85, Math.min(85, state.onMouseDownLat - deltaY * 0.2));
-        };
-        const onTouchEnd = () => {
+
+        const onPointerUp = () => {
             if (state.isBlocked || state.isReportVisible) return;
             state.isDragging = false;
         };
@@ -450,12 +428,10 @@ export default function MuseumPage() {
         const rendererDom = state.renderer?.domElement;
         document.getElementById('start-button')?.addEventListener('click', onStartClick);
         if (rendererDom) {
-            rendererDom.addEventListener('mousedown', onMouseDown);
-            rendererDom.addEventListener('mousemove', onMouseMove);
-            rendererDom.addEventListener('mouseup', onMouseUp);
-            rendererDom.addEventListener('touchstart', onTouchStart, { passive: false });
-            rendererDom.addEventListener('touchmove', onTouchMove, { passive: false });
-            rendererDom.addEventListener('touchend', onTouchEnd);
+            rendererDom.addEventListener('pointerdown', onPointerDown);
+            rendererDom.addEventListener('pointermove', onPointerMove);
+            rendererDom.addEventListener('pointerup', onPointerUp);
+            rendererDom.addEventListener('pointercancel', onPointerUp);
         }
         document.addEventListener('keydown', onKeyDown);
         document.addEventListener('keyup', onKeyUp);
@@ -472,12 +448,10 @@ export default function MuseumPage() {
             document.removeEventListener('keydown', onKeyDown);
             document.removeEventListener('keyup', onKeyUp);
             if (rendererDom) {
-                rendererDom.removeEventListener('mousedown', onMouseDown);
-                rendererDom.removeEventListener('mousemove', onMouseMove);
-                rendererDom.removeEventListener('mouseup', onMouseUp);
-                rendererDom.removeEventListener('touchstart', onTouchStart);
-                rendererDom.removeEventListener('touchmove', onTouchMove);
-                rendererDom.removeEventListener('touchend', onTouchEnd);
+                rendererDom.removeEventListener('pointerdown', onPointerDown);
+                rendererDom.removeEventListener('pointermove', onPointerMove);
+                rendererDom.removeEventListener('pointerup', onPointerUp);
+                rendererDom.removeEventListener('pointercancel', onPointerUp);
                 try{
                     currentMount.removeChild(rendererDom);
                 } catch(e) {

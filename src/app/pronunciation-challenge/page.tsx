@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -320,7 +319,7 @@ export default function PronunciationChallengePage() {
             <div className="mt-6 bg-nile-dark/50 p-4 rounded-lg">
                 <h3 className="text-sand-ochre font-bold mb-2">{texts.your_recording}</h3>
                 <audio src={userAudioUrl} controls className="w-full" />
-                 <Button onClick={handleAnalyzePronunciation} disabled={isAnalyzing} className="w-full mt-4 cta-button bg-teal-600 hover:bg-teal-700">
+                 <Button onClick={handleAnalyzePronunciation} disabled={isAnalyzing || isLoadingPhrases} className="w-full mt-4 cta-button bg-teal-600 hover:bg-teal-700">
                     {isAnalyzing ? <Loader2 className="animate-spin ml-2" /> : <WandSparkles className="ml-2"/>}
                     {isAnalyzing ? texts.evaluating : texts.evaluate}
                  </Button>
@@ -354,5 +353,3 @@ export default function PronunciationChallengePage() {
     </div>
   );
 }
-
-    
