@@ -93,5 +93,4 @@ export function useDocument<T = any>(
   }
   return { data, isLoading, error };
 }
-
     

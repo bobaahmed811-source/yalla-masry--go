@@ -47,5 +47,4 @@ export const BADGE_DEFINITIONS: Record<Badge, BadgeInfo> = {
 export function getBadgeByName(name: string): BadgeInfo | null {
   return BADGE_DEFINITIONS[name as Badge] || null;
 }
-
     

@@ -62,5 +62,4 @@ class TypedEventEmitter {
 // Create and export a singleton instance of the event emitter.
 // This ensures that all parts of the app use the same event bus.
 export const errorEmitter = new TypedEventEmitter();
-
     

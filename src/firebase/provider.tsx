@@ -39,5 +39,4 @@ export function FirebaseProvider({
     </FirebaseContext.Provider>
   );
 }
-
     
