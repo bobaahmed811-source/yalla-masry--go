@@ -49,5 +49,3 @@ const nextConfig: NextConfig = {
 
 // CRITICAL: This line exports the configuration so Vercel can use it.
 export default nextConfig;
-
-    
