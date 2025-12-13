@@ -1,3 +1,4 @@
+
 import * as THREE from 'three';
 
 export type ArtifactData = {
@@ -125,3 +126,5 @@ export const ARTIFACT_DATA: Artifacts = {
         isExplored: false
     }
 };
+
+    

@@ -1,3 +1,4 @@
+
 import { Smile, Mic, Crown, Medal } from 'lucide-react';
 import React from 'react';
 
@@ -46,4 +47,5 @@ export const BADGE_DEFINITIONS: Record<Badge, BadgeInfo> = {
 export function getBadgeByName(name: string): BadgeInfo | null {
   return BADGE_DEFINITIONS[name as Badge] || null;
 }
+
     

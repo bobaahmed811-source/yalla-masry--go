@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileoverview This file initializes the Genkit AI instance and configures it with the necessary plugins.
@@ -22,3 +23,5 @@ export const ai = genkit({
   // Allow running flows in a development environment without explicit environment checks.
   flowStateStore: 'local',
 });
+
+    
