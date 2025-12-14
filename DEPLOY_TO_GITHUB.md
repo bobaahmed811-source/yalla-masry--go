@@ -19,7 +19,7 @@
     -   `Add a README file`
     -   `Add .gitignore`
     -   `Choose a license`
-    يجب أن يكون المستودع فارغًا تمامًا.
+يجب أن يكون المستودع فارغًا تمامًا.
 6.  اضغطي على زر **"Create repository"**.
 
 ---
@@ -28,7 +28,8 @@
 
 بعد إنشاء المستودع، سيُظهر لك GitHub صفحة بها بعض الأوامر. نحن سنستخدم مجموعة الأوامر تحت عنوان `…or push an existing repository from the command line`.
 
-افتحي نافذة الأوامر (Terminal أو Command Prompt) **داخل مجلد مشروعك** `yalla-masry-academy` ونفذي الأوامر التالية بالترتيب، واحدًا تلو الآخر:
+افتحي **نافذة الأوامر (Terminal أو Command Prompt)** **داخل مجلد مشروعك** `yalla-masry-academy` ونفذي الأوامر التالية بالترتيب، واحدًا تلو الآخر.
+*(Note: The 'Terminal' or 'Command Prompt' is an application on your computer for typing commands.)*
 
 1.  **تهيئة المستودع المحلي (إذا لم يكن موجودًا):**
     ```sh
