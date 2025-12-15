@@ -47,3 +47,7 @@ git push -u origin main
 5.  Click "Deploy".
 
 This process will solve the `404` error.
+
+## Deployment Philosophy (For the Developer)
+
+This project is under active, iterative development. The initial deployment is the most critical step. Once the project is successfully deployed for the first time and linked to the domain, future updates will be pushed to the GitHub repository. Vercel will automatically detect these pushes and deploy the new changes, allowing the application to grow and evolve seamlessly. Your primary task is to establish this initial, stable deployment pipeline.
